@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>SP Jain · Room Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ============================================================================
+   SP JAIN ROOM BOARD  —  single-file kiosk / TV / mobile display
+   Design brief: dark lane-timeline, per-room colour coding, live red "now"
+   sweep with floating time chip + pulsing dot (the signature element).
+   ========================================================================= */
+
+:root{
+  /* surfaces */
+  --bg:        #050508;
+  --bg-2:      #0a0a10;
+  --surface:   #0d0e15;
+  --surface-2: #12131c;
+  --border:    #1c1e2b;
+  --border-2:  #262a3b;
+  --text:      #f4f6fb;
+  --muted:     #8b90a2;
+  --muted-2:   #6b7080;
+  --now:       #ff2f3d;
+
+  /* per-room accents (LC1..LC8) */
+  --r1:#3b82f6; --r2:#22c55e; --r3:#a855f7; --r4:#eab308;
+  --r5:#f97316; --r6:#14b8a6; --r7:#ec4899; --r8:#38bdf8;
+
+  /* event-type accents */
+  --t-lecture:#2f6bff; --t-session:#3b82f6; --t-workshop:#8b5cf6;
+  --t-meeting:#f97316; --t-seminar:#ec4899; --t-exam:#ef4444;
+
+  /* scale — overridden per mode */
+  --pad: 22px;
+  --label-w: 108px;
+  --clock-size: 44px;
+  --title-size: 26px;
+  --fs-room: 22px;
+  --fs-event-title: 17px;
+  --fs-event-time: 15px;
+  --fs-axis: 15px;
+  --radius: 16px;
+}
+
+*{ box-sizing:border-box; margin:0; padding:0; }
+html,body{ height:100%; }
+body{
+  background:
+    radial-gradient(1200px 800px at 50% -10%, #0e1020 0%, transparent 60%),
+    var(--bg);
+  color:var(--text);
+  font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+  -webkit-user-select:none; user-select:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.tnum{ font-variant-numeric:tabular-nums; font-feature-settings:"tnum" 1; }
+
+/* ---------- app shell ---------- */
+#app{ height:100%; display:flex; flex-direction:column; }
+
+/* ---------- header ---------- */
+.header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:calc(var(--pad)*0.9) var(--pad) calc(var(--pad)*0.7);
+  gap:16px;
+}
+.brand{ display:flex; align-items:center; gap:16px; min-width:0; }
+.logo{
+  width:60px; height:60px; flex:none; border-radius:14px;
+  background:linear-gradient(150deg,#1b1e33,#0b0c16);
+  border:1px solid var(--border-2);
+  display:grid; place-items:center;
+  box-shadow:0 6px 20px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05);
+}
+.logo svg{ width:34px; height:34px; }
+.brand-text .name{ font-size:var(--title-size); font-weight:800; letter-spacing:-.5px; line-height:1; }
+.brand-text .campus{ color:#f0b429; font-size:calc(var(--title-size)*0.62); font-weight:600; margin-top:5px; letter-spacing:.2px; }
+.clockbox{ text-align:right; flex:none; }
+.clock{ font-size:var(--clock-size); font-weight:800; letter-spacing:-1px; line-height:1; }
+.updated{ display:flex; align-items:center; justify-content:flex-end; gap:8px; color:var(--muted); font-size:15px; margin-top:9px; font-weight:500; }
+.dot-live{ width:9px; height:9px; border-radius:50%; background:#22c55e; box-shadow:0 0 10px #22c55e; }
+
+.rule{ height:1px; background:linear-gradient(90deg,transparent,var(--border-2) 12%,var(--border-2) 88%,transparent); margin:0 var(--pad); }
+
+/* ---------- today bar ---------- */
+.today{ display:flex; align-items:center; gap:18px; padding:calc(var(--pad)*0.85) var(--pad); }
+.today-badge{ width:56px; height:56px; flex:none; border-radius:14px; background:var(--surface-2); border:1px solid var(--border-2); display:grid; place-items:center; color:#f0b429; }
+.today-badge svg{ width:30px; height:30px; }
+.today-label{ color:#f0b429; font-weight:800; font-size:calc(var(--title-size)*0.92); letter-spacing:.5px; }
+.today-sep{ width:1px; height:34px; background:var(--border-2); }
+.today-date{ font-size:calc(var(--title-size)*0.82); font-weight:600; color:#e7eaf2; }
+
+/* ---------- timeline ---------- */
+.timeline{
+  position:relative; flex:1; min-height:0;
+  margin:0 var(--pad);
+  border:1px solid var(--border); border-radius:var(--radius);
+  background:linear-gradient(180deg,var(--surface),var(--bg-2));
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.axis{ display:flex; align-items:center; height:56px; flex:none; border-bottom:1px solid var(--border); }
+.axis-spacer{ width:var(--label-w); flex:none; display:flex; align-items:center; justify-content:center; }
+.navbtn{ width:40px; height:40px; border-radius:11px; border:1px solid var(--border-2); background:var(--surface-2); color:#f0b429; display:grid; place-items:center; cursor:pointer; transition:.15s; }
+.navbtn:hover{ background:var(--border); }
+.navbtn svg{ width:20px; height:20px; }
+.axis-track{ position:relative; flex:1; height:100%; }
+.axis-hour{ position:absolute; top:50%; transform:translate(-50%,-50%); color:var(--muted); font-size:var(--fs-axis); font-weight:600; }
+
+.rows-wrap{ position:relative; flex:1; min-height:0; }
+.grid{ position:absolute; top:0; bottom:0; left:var(--label-w); right:0; pointer-events:none; }
+.gridline{ position:absolute; top:0; bottom:0; width:1px; background:var(--border); opacity:.55; }
+.gridline.dash{ background:transparent; border-left:1px dashed var(--border-2); opacity:.5; }
+
+.rows{ position:relative; height:100%; display:flex; flex-direction:column; z-index:1; }
+.room-row{ flex:1; min-height:62px; display:flex; align-items:stretch; border-bottom:1px solid rgba(28,30,43,.6); }
+.room-row:last-child{ border-bottom:none; }
+.room-label{ width:var(--label-w); flex:none; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; border-right:1px solid var(--border); }
+.room-code{ font-weight:800; font-size:var(--fs-room); letter-spacing:.3px; line-height:1; }
+.room-label svg{ width:26px; height:26px; opacity:.9; }
+.lane{ position:relative; flex:1; }
+
+/* available band */
+.avail{
+  position:absolute; top:9px; bottom:9px; left:10px; right:12px;
+  border-radius:12px; display:flex; align-items:center; gap:12px; padding-left:18px;
+}
+.avail svg{ width:24px; height:24px; flex:none; }
+.avail span{ font-weight:600; font-size:var(--fs-event-title); }
+
+/* event block */
+.event{
+  position:absolute; top:9px; bottom:9px;
+  border-radius:12px; padding:0 16px;
+  display:flex; align-items:center; gap:13px; overflow:hidden;
+  cursor:pointer; min-width:64px;
+  border:1px solid transparent;
+  transition:transform .12s ease, box-shadow .12s ease;
+}
+.event:hover{ transform:translateY(-1px); }
+.event .ico{ width:38px; height:38px; flex:none; border-radius:10px; display:grid; place-items:center; }
+.event .ico svg{ width:22px; height:22px; }
+.event .meta{ min-width:0; }
+.event .etitle{ font-weight:600; font-size:var(--fs-event-title); line-height:1.15; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.event .etime{ font-size:var(--fs-event-time); margin-top:4px; opacity:.92; white-space:nowrap; }
+
+/* now marker (signature) */
+.now-marker{
+  position:absolute; top:0; bottom:0; width:0; z-index:5; pointer-events:none;
+  left: calc(var(--label-w) + (100% - var(--label-w)) * var(--now-frac, 0));
+}
+.now-marker .line{ position:absolute; top:20px; bottom:0; left:-1px; width:2px; background:var(--now); box-shadow:0 0 10px rgba(255,47,61,.8); }
+.now-marker .chip{
+  position:absolute; top:8px; left:0; transform:translateX(-50%);
+  background:var(--now); color:#fff; font-weight:700; font-size:14px;
+  padding:4px 11px; border-radius:9px; white-space:nowrap;
+  box-shadow:0 4px 14px rgba(255,47,61,.5);
+}
+.now-marker .chip::after{ content:""; position:absolute; left:50%; bottom:-5px; transform:translateX(-50%); border:5px solid transparent; border-top-color:var(--now); }
+.now-marker .dot{ position:absolute; bottom:-5px; left:0; transform:translateX(-50%); width:11px; height:11px; border-radius:50%; background:var(--now); }
+@media (prefers-reduced-motion: no-preference){
+  .now-marker .dot{ animation:pulse 2s ease-in-out infinite; }
+}
+@keyframes pulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(255,47,61,.55);} 50%{ box-shadow:0 0 0 9px rgba(255,47,61,0);} }
+.now-marker.off{ display:none; }
+
+/* ---------- legend ---------- */
+.legend{ display:flex; flex-wrap:wrap; align-items:center; gap:22px; padding:calc(var(--pad)*0.8) var(--pad); border-top:1px solid var(--border); margin:0 var(--pad); }
+.leg{ display:flex; align-items:center; gap:9px; color:#cfd3e0; font-weight:500; font-size:15px; }
+.leg .swatch{ width:30px; height:30px; border-radius:9px; display:grid; place-items:center; }
+.leg .swatch svg{ width:17px; height:17px; }
+
+/* ---------- footer ---------- */
+.footer{ display:flex; align-items:center; justify-content:space-between; padding:calc(var(--pad)*0.75) var(--pad) var(--pad); color:var(--muted); gap:16px; }
+.foot-item{ display:flex; align-items:center; gap:11px; font-size:15px; font-weight:500; }
+.foot-item svg{ width:22px; height:22px; opacity:.75; }
+.foot-sep{ width:1px; height:22px; background:var(--border-2); }
+.refresh-num{ color:#22c55e; font-weight:700; }
+
+/* ============================================================================
+   MODE: FIRE TV (landscape, 10-foot UI) — scale everything up
+   ========================================================================= */
+body.mode-tv{ --pad:34px; --label-w:150px; --clock-size:60px; --title-size:36px; --fs-room:30px; --fs-event-title:23px; --fs-event-time:19px; --fs-axis:19px; --radius:20px; }
+body.mode-tv .logo{ width:80px; height:80px; } body.mode-tv .logo svg{ width:46px; height:46px; }
+body.mode-tv .today-badge{ width:72px; height:72px; } body.mode-tv .today-badge svg{ width:38px; height:38px; }
+body.mode-tv .axis{ height:66px; } body.mode-tv .room-row{ min-height:70px; }
+body.mode-tv .legend{ gap:34px; } body.mode-tv .leg{ font-size:19px; }
+body.mode-tv .foot-item{ font-size:19px; }
+body.mode-tv .event .ico{ width:46px; height:46px; } body.mode-tv .event .ico svg{ width:26px; height:26px; }
+
+/* ============================================================================
+   MODE: MOBILE — vertical card list (no squished Gantt)
+   ========================================================================= */
+.mobile-list{ display:none; }
+body.mode-mobile{ overflow:auto; }
+body.mode-mobile #app{ height:auto; min-height:100%; }
+body.mode-mobile .timeline, body.mode-mobile .legend, body.mode-mobile .footer{ display:none; }
+body.mode-mobile .header{ padding:16px 16px 12px; }
+body.mode-mobile{ --title-size:22px; --clock-size:30px; }
+body.mode-mobile .logo{ width:44px; height:44px; } body.mode-mobile .logo svg{ width:26px; height:26px; }
+body.mode-mobile .today{ padding:12px 16px; }
+body.mode-mobile .today-badge{ width:42px; height:42px; } body.mode-mobile .today-badge svg{ width:23px; height:23px; }
+body.mode-mobile .today-label{ font-size:18px; } body.mode-mobile .today-date{ font-size:15px; } body.mode-mobile .today-sep{ height:26px; }
+body.mode-mobile .mobile-list{ display:flex; flex-direction:column; gap:12px; padding:6px 16px 28px; }
+
+.mcard{ background:var(--surface); border:1px solid var(--border); border-left-width:4px; border-radius:15px; padding:15px 15px 13px; }
+.mcard-top{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+.mcard-room{ display:flex; align-items:center; gap:10px; font-weight:800; font-size:19px; }
+.mcard-room .cdot{ width:11px; height:11px; border-radius:50%; }
+.pill{ font-size:12.5px; font-weight:700; padding:5px 11px; border-radius:999px; letter-spacing:.2px; }
+.pill.free{ color:#22c55e; background:rgba(34,197,94,.12); }
+.pill.busy{ color:#fff; }
+.m-now{ display:flex; align-items:center; gap:11px; background:var(--surface-2); border:1px solid var(--border); border-radius:11px; padding:11px 12px; }
+.m-now .ico{ width:36px; height:36px; flex:none; border-radius:9px; display:grid; place-items:center; }
+.m-now .ico svg{ width:21px; height:21px; }
+.m-now .etitle{ font-weight:600; font-size:15.5px; }
+.m-now .etime{ font-size:13.5px; color:var(--muted); margin-top:3px; }
+.m-next{ margin-top:11px; font-size:14px; color:var(--muted); display:flex; gap:8px; align-items:baseline; }
+.m-next b{ color:#cfd3e0; font-weight:600; }
+.m-empty{ color:var(--muted); font-size:14.5px; padding:4px 2px; }
+/* mobile mini-timeline */
+.mbar{ position:relative; height:8px; margin-top:13px; border-radius:5px; background:var(--surface-2); overflow:hidden; }
+.mbar .seg{ position:absolute; top:0; bottom:0; border-radius:5px; }
+.mbar .mnow{ position:absolute; top:-2px; bottom:-2px; width:2px; background:var(--now); box-shadow:0 0 6px var(--now); }
+.mbar-scale{ display:flex; justify-content:space-between; margin-top:6px; color:var(--muted-2); font-size:11px; }
+
+/* ---------- details modal ---------- */
+.modal-bg{ position:fixed; inset:0; background:rgba(3,4,8,.72); backdrop-filter:blur(3px); display:none; align-items:center; justify-content:center; z-index:50; padding:24px; }
+.modal-bg.show{ display:flex; }
+.modal{ width:min(440px,92vw); background:var(--surface); border:1px solid var(--border-2); border-radius:18px; padding:24px; box-shadow:0 24px 70px rgba(0,0,0,.6); }
+.modal .m-ico{ width:56px; height:56px; border-radius:14px; display:grid; place-items:center; margin-bottom:16px; }
+.modal .m-ico svg{ width:30px; height:30px; }
+.modal h3{ font-size:23px; font-weight:800; letter-spacing:-.3px; }
+.modal .m-row{ display:flex; align-items:center; gap:11px; margin-top:14px; color:#cbd0dd; font-size:16px; }
+.modal .m-row svg{ width:20px; height:20px; opacity:.7; flex:none; }
+.modal .m-close{ margin-top:22px; width:100%; padding:13px; border:none; border-radius:12px; background:var(--surface-2); border:1px solid var(--border-2); color:var(--text); font-weight:700; font-size:15px; cursor:pointer; }
+.modal .m-close:hover{ background:var(--border); }
+
+/* ---------- settings modal (on-device ICS config) ---------- */
+.set-modal{ width:min(560px,94vw); max-height:88vh; overflow:auto; }
+.set-modal h3{ font-size:21px; font-weight:800; letter-spacing:-.3px; }
+.set-sub{ color:var(--muted); font-size:13.5px; margin-top:8px; line-height:1.5; }
+.set-rows{ display:flex; flex-direction:column; gap:9px; margin-top:16px; }
+.set-row{ display:flex; align-items:center; gap:10px; }
+.set-dot{ width:10px; height:10px; border-radius:50%; flex:none; }
+.set-code{ width:44px; flex:none; font-weight:700; font-size:14px; color:#cbd0dd; }
+.set-row input{ flex:1; min-width:0; background:var(--surface-2); border:1px solid var(--border-2); border-radius:9px; color:var(--text); padding:9px 11px; font-size:12.5px; font-family:inherit; }
+.set-row input:focus{ outline:none; border-color:#3b82f6; }
+.set-opts{ margin-top:16px; }
+.set-opt{ display:flex; align-items:center; gap:10px; color:#cbd0dd; font-size:14px; }
+.set-opt select{ background:var(--surface-2); border:1px solid var(--border-2); border-radius:9px; color:var(--text); padding:7px 10px; font-size:13px; font-family:inherit; }
+.set-btns{ display:flex; gap:10px; margin-top:22px; }
+.set-btns button{ flex:1; padding:12px; border-radius:11px; border:1px solid var(--border-2); font-weight:700; font-size:14px; cursor:pointer; }
+.set-cancel{ background:var(--surface-2); color:var(--text); }
+.set-save{ background:#2563eb; border-color:#2563eb; color:#fff; }
+.set-save:hover{ background:#1d4ed8; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- HEADER -->
+  <header class="header">
+    <div class="brand">
+      <div class="logo" id="logoSlot">
+        <!-- Replace this SVG with your official SP Jain logo (see CONFIG.logoUrl) -->
+        <svg viewBox="0 0 48 48" fill="none">
+          <path d="M24 4l16 6v10c0 11-7 18-16 24C15 38 8 31 8 20V10l16-6z" stroke="#f0b429" stroke-width="2.2" stroke-linejoin="round"/>
+          <circle cx="24" cy="20" r="5" stroke="#f0b429" stroke-width="2.2"/>
+          <path d="M24 25v8M18 33h12" stroke="#f0b429" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="name">SP Jain</div>
+        <div class="campus" id="campusLabel">Dubai Campus</div>
+      </div>
+    </div>
+    <div class="clockbox">
+      <div class="clock tnum" id="clock">--:--</div>
+      <div class="updated"><span class="dot-live"></span>Last updated: <span class="tnum" id="updated">--:--</span></div>
+    </div>
+  </header>
+  <div class="rule"></div>
+
+  <!-- TODAY -->
+  <div class="today">
+    <div class="today-badge">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4.5" width="18" height="16" rx="2.5" stroke="currentColor" stroke-width="2"/><path d="M3 9h18M8 2.5v4M16 2.5v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </div>
+    <div class="today-label" id="todayLabel">TODAY</div>
+    <div class="today-sep"></div>
+    <div class="today-date" id="todayDate">—</div>
+  </div>
+
+  <!-- TIMELINE (kiosk + tv) -->
+  <div class="timeline" id="timeline">
+    <div class="axis">
+      <div class="axis-spacer">
+        <button class="navbtn" id="navPrev" aria-label="Previous day">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="axis-track" id="axisTrack"></div>
+    </div>
+    <div class="rows-wrap">
+      <div class="grid" id="grid"></div>
+      <div class="rows" id="rows"></div>
+      <div class="now-marker" id="nowMarker">
+        <div class="chip tnum" id="nowChip">--:--</div>
+        <div class="line"></div>
+        <div class="dot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOBILE list -->
+  <div class="mobile-list" id="mobileList"></div>
+
+  <!-- LEGEND -->
+  <div class="legend" id="legend"></div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="foot-item">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9.2" stroke="currentColor" stroke-width="2"/><path d="M12 11v5M12 7.6v.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      Tap any event for more details
+    </div>
+    <div class="foot-sep"></div>
+    <div class="foot-item">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M21 12a9 9 0 11-2.64-6.36M21 4v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Auto refresh in <span class="refresh-num tnum" id="refreshNum">--</span> sec
+    </div>
+  </footer>
+</div>
+
+<!-- DETAILS MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal" id="modal"></div>
+</div>
+
+<!-- SETTINGS MODAL (open by long-pressing the logo, or press "s") -->
+<div class="modal-bg" id="setBg">
+  <div class="modal set-modal" id="setModal"></div>
+</div>
+
+<script>
+/* ============================================================================
+   1) CONFIGURATION  —  edit this block for your deployment
+   ----------------------------------------------------------------------------
+   • Put each room's Outlook "Publish calendar" .ics URL in `ics` below —
+     OR just long-press the logo on the device to open Settings and paste them
+     there (saved on-device, no rebuild needed). Settings values win over these.
+   • Inside the Capacitor APK, ICS fetches are routed through native HTTP
+     (CapacitorHttp), so Outlook's CORS restriction does NOT apply — no server
+     or proxy is required. `proxyUrl` is only for running this in a plain
+     browser during testing.
+   • If a fetch fails, the room shows the last successfully-cached data, then
+     falls back to built-in sample data, so the board never goes blank.
+   • Force a layout on any device with a URL param:  ?mode=kiosk | tv | mobile
+     Jump to another day for testing with:            ?date=2026-07-05
+   ========================================================================= */
+const CONFIG = {
+  campus: "Dubai Campus",
+  logoUrl: "",                 // e.g. "logo.png" — replaces the placeholder shield
+  proxyUrl: "",                // browser testing only — NOT needed in the APK
+  windowStartHour: 8,          // timeline start (24h)
+  windowEndHour: 18,           // timeline end (24h)
+  refreshSeconds: 60,          // data refresh cadence
+  hideWeekends: false,
+  rooms: [
+    { id:"LC1", code:"LC 1", color:"var(--r1)", ics:"https://outlook.office365.com/owa/calendar/43ada92dbdce48dda9728d2159c03008@spjain.ac.uk/6ed012db80be44adb74bf5cb5c88384a2468028672845839237/calendar.ics" },
+    { id:"LC2", code:"LC 2", color:"var(--r2)", ics:"https://outlook.office365.com/owa/calendar/43ada92dbdce48dda9728d2159c03008@spjain.ac.uk/082f815317a54517b3d19e9e5bf2368f14396728089898177500/calendar.ics" },
+    { id:"LC3", code:"LC 3", color:"var(--r3)", ics:"https://outlook.office365.com/owa/calendar/43ada92dbdce48dda9728d2159c03008@spjain.ac.uk/9c3bfd7b3b7f4b62a4f2f78d27b154b112784333448470973555/calendar.ics" },
+    { id:"LC4", code:"LC 4", color:"var(--r4)", ics:"https://outlook.office365.com/owa/calendar/43ada92dbdce48dda9728d2159c03008@spjain.org/ae8bf20836e84c99bd60b2a0f4017b038814287519930194752/calendar.ics" },
+    { id:"LC5", code:"LC 5", color:"var(--r5)", ics:"https://outlook.office365.com/owa/calendar/43ada92dbdce48dda9728d2159c03008@spjain.ac.uk/98265a7ec67d4deb823de57de6a1490a785590415736748880/calendar.ics" },
+    { id:"LC6", code:"LC 6", color:"var(--r6)", ics:"https://outlook.office365.com/owa/calendar/43ada92dbdce48dda9728d2159c03008@spjain.ac.uk/a6ecf6902e204c819db9dcbbdf5ae77e13061167131538470782/calendar.ics" },
+    { id:"LC7", code:"LC 7", color:"var(--r7)", ics:"https://outlook.office365.com/owa/calendar/43ada92dbdce48dda9728d2159c03008@spjain.ac.uk/40a32073ded2424cb9baca04355ce8ac1050474817734081253/calendar.ics" },
+    { id:"LC8", code:"LC 8", color:"var(--r8)", ics:"https://outlook.office365.com/owa/calendar/43ada92dbdce48dda9728d2159c03008@spjain.ac.uk/719af9dc03f54190be4ff996d2e5e3489846282028267570709/calendar.ics" },
+  ],
+};
+
+/* ============================================================================
+   2) EVENT TYPES + ICONS
+   ========================================================================= */
+const ICONS = {
+  lecture:'<svg viewBox="0 0 24 24" fill="none"><path d="M22 9L12 4.5 2 9l10 4.5L22 9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M6 11v5c0 1 2.7 2.8 6 2.8s6-1.8 6-2.8v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  session:'<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4.5" width="18" height="12" rx="1.8" stroke="currentColor" stroke-width="2"/><path d="M2 20h20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  workshop:'<svg viewBox="0 0 24 24" fill="none"><path d="M12 6.5C10 5 7 5 5 6v12c2-1 5-1 7 .5 2-1.5 5-1.5 7-.5V6c-2-1-5-1-7 .5z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 6.5V19" stroke="currentColor" stroke-width="2"/></svg>',
+  meeting:'<svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="2"/><path d="M3.5 19c0-3 2.6-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M16.5 6.2A3 3 0 0118 12M18 14.2c2.4.3 3.5 2.4 3.5 4.8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  seminar:'<svg viewBox="0 0 24 24" fill="none"><path d="M3 4.5h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M4 4.5v9.5a1.5 1.5 0 001.5 1.5h13a1.5 1.5 0 001.5-1.5V4.5" stroke="currentColor" stroke-width="2"/><path d="M8 12l2.6-2.6L13 11l3-3.4M12 15.5V20M9 20l3-2 3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  exam:'<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="4" width="14" height="17" rx="2" stroke="currentColor" stroke-width="2"/><path d="M9 4V3.2C9 2.5 9.5 2 10.2 2h3.6c.7 0 1.2.5 1.2 1.2V4" stroke="currentColor" stroke-width="2"/><path d="M8.5 11h7M8.5 15h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9.2" fill="currentColor" opacity="0.18"/><circle cx="12" cy="12" r="9.2" stroke="currentColor" stroke-width="2"/><path d="M8 12.2l2.6 2.6L16 9.4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  door:'<svg viewBox="0 0 24 24" fill="none"><path d="M5 21V4a1 1 0 011-1h9a1 1 0 011 1v17M4 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="13" cy="12" r="1" fill="currentColor"/></svg>',
+};
+const TYPES = {
+  lecture:  { label:"Lecture",  icon:"lecture",  color:"var(--t-lecture)" },
+  session:  { label:"Session",  icon:"session",  color:"var(--t-session)" },
+  workshop: { label:"Workshop", icon:"workshop", color:"var(--t-workshop)" },
+  meeting:  { label:"Meeting",  icon:"meeting",  color:"var(--t-meeting)" },
+  seminar:  { label:"Seminar",  icon:"seminar",  color:"var(--t-seminar)" },
+  exam:     { label:"Exam",     icon:"exam",     color:"var(--t-exam)" },
+};
+const LEGEND = ["lecture","meeting","workshop","seminar","exam"]; // + Available appended
+
+/* keyword classifier for real ICS events (SUMMARY / CATEGORIES) */
+function classify(summary="", categories=""){
+  const s = (categories + " " + summary).toLowerCase();
+  if(/\b(exam|midterm|final|test|assessment)\b/.test(s)) return "exam";
+  if(/\b(seminar|guest|keynote|talk|panel)\b/.test(s)) return "seminar";
+  if(/\b(workshop|bootcamp|lab|hands-on)\b/.test(s)) return "workshop";
+  if(/\b(meeting|faculty|standup|sync|review|briefing|council|committee|1:1)\b/.test(s)) return "meeting";
+  if(/\b(mba|exec|batch|cohort|session)\b/.test(s)) return "session";
+  return "lecture"; // class / lecture / course / module / default
+}
+
+/* ============================================================================
+   3) SAMPLE DATA  (mirrors the prototype exactly; used when no ICS configured)
+   ========================================================================= */
+function sampleFor(roomId){
+  const S = {
+    LC1:[ {title:"AI Workshop",   s:"10:00", e:"12:00", type:"lecture", loc:"LC 1"},
+          {title:"MBA Session",   s:"13:00", e:"17:00", type:"session", loc:"LC 1"} ],
+    LC3:[ {title:"Class Session", s:"11:00", e:"14:00", type:"workshop", loc:"LC 3"} ],
+    LC5:[ {title:"Faculty Meeting",s:"09:00",e:"11:00", type:"meeting",  loc:"LC 5"} ],
+    LC7:[ {title:"Seminar",       s:"12:00", e:"15:00", type:"seminar",  loc:"LC 7"} ],
+  };
+  const list = S[roomId] || [];
+  const d = state.viewDate;
+  return list.map(x=>({
+    title:x.title, type:x.type, location:x.loc,
+    start:mkTime(d, x.s), end:mkTime(d, x.e),
+  }));
+}
+function mkTime(day, hhmm){ const [h,m]=hhmm.split(":").map(Number); const t=new Date(day); t.setHours(h,m,0,0); return t; }
+
+/* ============================================================================
+   4) ICS PARSER  (client-side; handles common single-campus feeds)
+      Supports: SUMMARY, LOCATION, CATEGORIES, DTSTART/DTEND (UTC 'Z',
+      floating/TZID treated as local wall time, all-day VALUE=DATE),
+      and basic RRULE FREQ=DAILY / WEEKLY (with BYDAY + UNTIL).
+   ========================================================================= */
+function parseICS(text){
+  const lines = text.replace(/\r\n/g,"\n").replace(/\n[ \t]/g,"").split("\n");
+  const events=[]; let cur=null;
+  for(const line of lines){
+    if(line==="BEGIN:VEVENT"){ cur={}; }
+    else if(line==="END:VEVENT"){ if(cur && cur.start) events.push(cur); cur=null; }
+    else if(cur){
+      const i=line.indexOf(":"); if(i<0) continue;
+      const left=line.slice(0,i), val=line.slice(i+1);
+      const [name,...params]=left.split(";");
+      if(name==="SUMMARY") cur.title=unescapeICS(val);
+      else if(name==="LOCATION") cur.location=unescapeICS(val);
+      else if(name==="CATEGORIES") cur.categories=val;
+      else if(name==="DTSTART"){ const p=parseDT(val,params); cur.start=p.date; cur.allDay=p.allDay; }
+      else if(name==="DTEND"){ cur.end=parseDT(val,params).date; }
+      else if(name==="RRULE") cur.rrule=parseRRule(val);
+    }
+  }
+  return events;
+}
+function unescapeICS(v){ return v.replace(/\\n/gi,"\n").replace(/\\,/g,",").replace(/\\;/g,";").replace(/\\\\/g,"\\"); }
+function parseDT(val, params){
+  const isDate = params.some(p=>/VALUE=DATE\b/i.test(p)) || /^\d{8}$/.test(val);
+  if(isDate){ const y=+val.slice(0,4),m=+val.slice(4,6)-1,d=+val.slice(6,8); return {date:new Date(y,m,d,0,0,0), allDay:true}; }
+  const m = val.match(/(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})(Z)?/);
+  if(!m) return {date:new Date(NaN), allDay:false};
+  const [,Y,Mo,D,H,Mi,S,Z]=m;
+  const date = Z ? new Date(Date.UTC(+Y,+Mo-1,+D,+H,+Mi,+S)) : new Date(+Y,+Mo-1,+D,+H,+Mi,+S);
+  return {date, allDay:false};
+}
+function parseRRule(val){
+  const o={}; val.split(";").forEach(kv=>{ const [k,v]=kv.split("="); o[k]=v; });
+  return { freq:o.FREQ, byday:(o.BYDAY||"").split(",").filter(Boolean),
+           until:o.UNTIL?parseDT(o.UNTIL,[]).date:null };
+}
+const WD=["SU","MO","TU","WE","TH","FR","SA"];
+/* expand one VEVENT to its instance on `day`, or null */
+function instanceOn(ev, day){
+  if(!ev.start||isNaN(ev.start)) return null;
+  const durMs = (ev.end && !isNaN(ev.end)) ? (ev.end-ev.start) : 3600000;
+  const sameDay = (a,b)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();
+  const build = ()=>{ const s=new Date(day); s.setHours(ev.start.getHours(),ev.start.getMinutes(),0,0); return {start:s, end:new Date(s.getTime()+durMs)}; };
+  if(!ev.rrule){ return sameDay(ev.start, day) ? {start:ev.start, end:new Date(ev.start.getTime()+durMs)} : null; }
+  if(ev.rrule.until && day > ev.rrule.until) return null;
+  if(day < new Date(ev.start.getFullYear(),ev.start.getMonth(),ev.start.getDate())) return null;
+  if(ev.rrule.freq==="DAILY") return build();
+  if(ev.rrule.freq==="WEEKLY"){
+    const days = ev.rrule.byday.length ? ev.rrule.byday : [WD[ev.start.getDay()]];
+    return days.includes(WD[day.getDay()]) ? build() : null;
+  }
+  return null; // MONTHLY/YEARLY not expanded (rare for room timetables)
+}
+
+/* ============================================================================
+   5) STATE + DATA LOADING
+   ========================================================================= */
+const state = { mode:"kiosk", viewDate:new Date(), lastUpdated:null, byRoom:{}, refreshLeft:CONFIG.refreshSeconds };
+
+/* ---------- persistence + offline cache (localStorage; safe no-op) ---------- */
+const store = {
+  get(k){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } },
+};
+const K_ICS="scb_ics_v1", K_CACHE="scb_cache_v1", K_REFRESH="scb_refresh_v1";
+function loadSaved(){
+  const saved=store.get(K_ICS)||{};
+  CONFIG.rooms.forEach(r=>{ if(saved[r.id]!==undefined && saved[r.id]!=="") r.ics=saved[r.id]; });
+  const rs=store.get(K_REFRESH); if(rs) CONFIG.refreshSeconds=rs;
+}
+function dayKey(id){ const d=state.viewDate; return id+"|"+d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function saveCache(id,list){
+  const all=store.get(K_CACHE)||{};
+  all[dayKey(id)]=list.map(e=>({t:e.title,ty:e.type,l:e.location,s:e.start.toISOString(),e:e.end.toISOString()}));
+  const ks=Object.keys(all); if(ks.length>48) ks.slice(0,ks.length-48).forEach(k=>delete all[k]);
+  store.set(K_CACHE,all);
+}
+function readCache(id){
+  const all=store.get(K_CACHE)||{}; const arr=all[dayKey(id)]; if(!arr) return null;
+  return arr.map(o=>({title:o.t,type:o.ty,location:o.l,start:new Date(o.s),end:new Date(o.e)}));
+}
+
+async function fetchICS(url){
+  const target = CONFIG.proxyUrl ? (CONFIG.proxyUrl + encodeURIComponent(url)) : url;
+  const res = await fetch(target, { cache:"no-store" });
+  if(!res.ok) throw new Error("HTTP "+res.status);
+  return res.text();
+}
+async function loadRoom(room){
+  if(!room.ics){ return sampleFor(room.id); }
+  try{
+    const text = await fetchICS(room.ics);
+    const raw = parseICS(text);
+    const day = state.viewDate;
+    const list = raw.map(ev=>{ const inst=instanceOn(ev,day); if(!inst) return null;
+        return { title:ev.title||"Booked", type:ev.type||classify(ev.title,ev.categories),
+                 location:ev.location||room.code, start:inst.start, end:inst.end }; })
+      .filter(Boolean);
+    saveCache(room.id, list);
+    return list;
+  }catch(err){
+    console.warn("ICS load failed for", room.id, err.message, "→ cache/sample");
+    const cached = readCache(room.id);
+    if(cached) return cached;
+    return sampleFor(room.id);
+  }
+}
+async function loadAll(){
+  const results = await Promise.all(CONFIG.rooms.map(r=>loadRoom(r)));
+  CONFIG.rooms.forEach((r,i)=>{
+    const list = results[i]
+      .filter(e=>overlapsWindow(e))
+      .sort((a,b)=>a.start-b.start);
+    state.byRoom[r.id] = list;
+  });
+  state.lastUpdated = new Date();
+  state.refreshLeft = CONFIG.refreshSeconds;
+  render();
+}
+
+/* ============================================================================
+   6) TIME HELPERS
+   ========================================================================= */
+const WIN_START = ()=>CONFIG.windowStartHour*60;
+const WIN_END   = ()=>CONFIG.windowEndHour*60;
+const WIN_TOTAL = ()=>WIN_END()-WIN_START();
+function minsOf(d){ return d.getHours()*60 + d.getMinutes(); }
+function overlapsWindow(e){ const s=minsOf(e.start), en=minsOf(e.end)||WIN_END(); return en>WIN_START() && s<WIN_END(); }
+function pct(mins){ return ((mins - WIN_START())/WIN_TOTAL())*100; }
+function fmt24(d){ return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+function fmt12(d){ let h=d.getHours(); const m=String(d.getMinutes()).padStart(2,"0"); const ap=h<12?"AM":"PM"; h=h%12||12; return h+":"+m+" "+ap; }
+function fmtDate(d){ return d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"}); }
+function withAlpha(cssVar, a){ /* resolve a CSS var to rgba */ const el=document.documentElement; const c=getComputedStyle(el).getPropertyValue(cssVar.replace("var(","").replace(")","").trim()).trim(); return hexToRgba(c,a); }
+function hexToRgba(hex,a){ const m=hex.replace("#",""); const n=m.length===3?m.split("").map(x=>x+x).join(""):m; const r=parseInt(n.slice(0,2),16),g=parseInt(n.slice(2,4),16),b=parseInt(n.slice(4,6),16); return `rgba(${r},${g},${b},${a})`; }
+
+/* ============================================================================
+   7) MODE DETECTION
+   ========================================================================= */
+function detectMode(){
+  const forced = new URLSearchParams(location.search).get("mode");
+  if(["kiosk","tv","mobile"].includes(forced)) return forced;
+  const w=window.innerWidth, h=window.innerHeight;
+  if(w<=760) return "mobile";
+  if(w/h > 1.25) return "tv";        // landscape / big TV
+  return "kiosk";                     // portrait / tall
+}
+function applyMode(){
+  const m=detectMode();
+  state.mode=m;
+  document.body.className = "mode-"+m;
+}
+
+/* ============================================================================
+   8) RENDER
+   ========================================================================= */
+function iconTile(type){ const t=TYPES[type]||TYPES.lecture; return `<div class="ico" style="background:${withAlpha(t.color,0.16)};color:${t.color}">${ICONS[t.icon]}</div>`; }
+
+function buildAxisAndGrid(){
+  const track=document.getElementById("axisTrack"); const grid=document.getElementById("grid");
+  track.innerHTML=""; grid.innerHTML="";
+  const hours = CONFIG.windowEndHour - CONFIG.windowStartHour;
+  for(let i=0;i<=hours;i++){
+    const p = (i/hours)*100;
+    const lab=document.createElement("div");
+    lab.className="axis-hour";
+    lab.textContent = String(CONFIG.windowStartHour+i).padStart(2,"0")+":00";
+    if(i===0) lab.style.cssText="left:0;transform:translateY(-50%)";
+    else if(i===hours) lab.style.cssText="left:100%;transform:translate(-100%,-50%)";
+    else lab.style.left=p+"%";
+    track.appendChild(lab);
+    const gl=document.createElement("div");
+    gl.className="gridline"+(i>0&&i<hours?" dash":"");
+    gl.style.left=p+"%";
+    grid.appendChild(gl);
+  }
+}
+
+function render(){
+  document.getElementById("clock").textContent=fmt12(new Date());
+  document.getElementById("updated").textContent = state.lastUpdated?fmt12(state.lastUpdated):"--:--";
+  document.getElementById("todayDate").textContent=fmtDate(state.viewDate);
+  const isToday = sameDate(state.viewDate,new Date());
+  document.getElementById("todayLabel").textContent = isToday?"TODAY":state.viewDate.toLocaleDateString("en-GB",{weekday:"short"}).toUpperCase();
+
+  if(state.mode==="mobile") renderMobile();
+  else renderTimeline();
+  renderLegend();
+  updateNow();
+}
+function sameDate(a,b){ return a.toDateString()===b.toDateString(); }
+
+function renderTimeline(){
+  buildAxisAndGrid();
+  const rows=document.getElementById("rows"); rows.innerHTML="";
+  CONFIG.rooms.forEach(room=>{
+    const list=state.byRoom[room.id]||[];
+    const row=document.createElement("div"); row.className="room-row";
+    row.innerHTML = `<div class="room-label" style="color:${room.color}">
+        <span class="room-code">${room.code}</span>${ICONS.door}
+      </div><div class="lane"></div>`;
+    const lane=row.querySelector(".lane");
+    if(list.length===0){
+      lane.innerHTML = `<div class="avail" style="background:${withAlpha(room.color,0.09)};border:1px solid ${withAlpha(room.color,0.28)};color:${room.color}">${ICONS.check}<span>Available</span></div>`;
+    } else {
+      list.forEach((ev,idx)=>{
+        const t=TYPES[ev.type]||TYPES.lecture;
+        const s=Math.max(minsOf(ev.start),WIN_START());
+        const e=Math.min(minsOf(ev.end)||WIN_END(),WIN_END());
+        const left=pct(s), width=Math.max(pct(e)-pct(s),4);
+        const el=document.createElement("div");
+        el.className="event";
+        el.style.cssText=`left:${left}%;width:${width}%;background:linear-gradient(135deg,${withAlpha(t.color,0.32)},${withAlpha(t.color,0.14)});border-color:${withAlpha(t.color,0.45)};box-shadow:inset 3px 0 0 ${t.color}, 0 4px 16px ${withAlpha(t.color,0.18)}`;
+        el.innerHTML = `${iconTile(ev.type)}<div class="meta"><div class="etitle">${escapeHtml(ev.title)}</div><div class="etime tnum" style="color:${t.color}">${fmt24(ev.start)} – ${fmt24(ev.end)}</div></div>`;
+        el.onclick=()=>openModal(ev,room);
+        lane.appendChild(el);
+      });
+    }
+    rows.appendChild(row);
+  });
+}
+
+function renderMobile(){
+  const wrap=document.getElementById("mobileList"); wrap.innerHTML="";
+  const now=new Date();
+  CONFIG.rooms.forEach(room=>{
+    const list=state.byRoom[room.id]||[];
+    const current=list.find(e=>e.start<=now && now<e.end);
+    const next=list.find(e=>e.start>now);
+    const card=document.createElement("div");
+    card.className="mcard"; card.style.borderLeftColor=room.color;
+    let pill = current
+      ? `<span class="pill busy" style="background:${withAlpha((TYPES[current.type]||TYPES.lecture).color,0.9)}">In session</span>`
+      : `<span class="pill free">Available</span>`;
+    let body="";
+    if(current){
+      const t=TYPES[current.type]||TYPES.lecture;
+      body += `<div class="m-now">${iconTile(current.type)}<div class="meta"><div class="etitle">${escapeHtml(current.title)}</div><div class="etime tnum">${fmt24(current.start)} – ${fmt24(current.end)}</div></div></div>`;
+    } else {
+      body += `<div class="m-empty">Free right now</div>`;
+    }
+    if(next){
+      body += `<div class="m-next">Next: <b>${escapeHtml(next.title)}</b> <span class="tnum">${fmt24(next.start)}</span></div>`;
+    } else if(!current && list.length===0){
+      body += `<div class="m-next">No sessions scheduled today</div>`;
+    }
+    // mini timeline
+    let segs="";
+    list.forEach(ev=>{
+      const t=TYPES[ev.type]||TYPES.lecture;
+      const s=Math.max(minsOf(ev.start),WIN_START()), e=Math.min(minsOf(ev.end)||WIN_END(),WIN_END());
+      segs += `<div class="seg" style="left:${pct(s)}%;width:${Math.max(pct(e)-pct(s),2)}%;background:${t.color}"></div>`;
+    });
+    const nf=Math.max(0,Math.min(1,(minsOf(now)-WIN_START())/WIN_TOTAL()));
+    const nowMark = sameDate(state.viewDate,now)&&nf>=0&&nf<=1 ? `<div class="mnow" style="left:${nf*100}%"></div>`:"";
+    body += `<div class="mbar">${segs}${nowMark}</div>
+             <div class="mbar-scale"><span>${String(CONFIG.windowStartHour).padStart(2,"0")}:00</span><span>${String(CONFIG.windowEndHour).padStart(2,"0")}:00</span></div>`;
+
+    card.innerHTML = `<div class="mcard-top"><div class="mcard-room"><span class="cdot" style="background:${room.color}"></span>${room.code}</div>${pill}</div>${body}`;
+    if(current) card.querySelector(".m-now").onclick=()=>openModal(current,room);
+    wrap.appendChild(card);
+  });
+}
+
+function renderLegend(){
+  const leg=document.getElementById("legend"); leg.innerHTML="";
+  LEGEND.forEach(k=>{ const t=TYPES[k];
+    leg.insertAdjacentHTML("beforeend",
+      `<div class="leg"><span class="swatch" style="background:${withAlpha(t.color,0.18)};color:${t.color}">${ICONS[t.icon]}</span>${t.label}</div>`);
+  });
+  leg.insertAdjacentHTML("beforeend",
+    `<div class="leg"><span class="swatch" style="background:rgba(34,197,94,.18);color:#22c55e">${ICONS.check}</span>Available</div>`);
+}
+
+/* live now-line — cheap, called every second */
+function updateNow(){
+  const marker=document.getElementById("nowMarker");
+  const now=new Date();
+  document.getElementById("clock").textContent=fmt12(now);
+  const showLine = sameDate(state.viewDate, now) && state.mode!=="mobile";
+  if(!showLine){ marker.classList.add("off"); return; }
+  marker.classList.remove("off");
+  let frac=(minsOf(now)-WIN_START())/WIN_TOTAL();
+  frac=Math.max(0,Math.min(1,frac));
+  document.getElementById("timeline").style.setProperty("--now-frac", frac);
+  document.getElementById("nowChip").textContent=fmt12(now);
+}
+
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+/* ---------- details modal ---------- */
+function openModal(ev, room){
+  const t=TYPES[ev.type]||TYPES.lecture;
+  const dur=Math.round((ev.end-ev.start)/60000);
+  const durTxt = dur>=60 ? `${Math.floor(dur/60)}h${dur%60?` ${dur%60}m`:""}` : `${dur}m`;
+  const m=document.getElementById("modal");
+  m.innerHTML = `
+    <div class="m-ico" style="background:${withAlpha(t.color,0.18)};color:${t.color}">${ICONS[t.icon]}</div>
+    <h3>${escapeHtml(ev.title)}</h3>
+    <div class="m-row" style="color:${t.color}">${badgeDot(t.color)} ${t.label}</div>
+    <div class="m-row">${ICONS.clock}<span class="tnum">${fmt24(ev.start)} – ${fmt24(ev.end)}</span><span style="color:var(--muted-2)">· ${durTxt}</span></div>
+    <div class="m-row">${ICONS.door}${escapeHtml(ev.location||room.code)}</div>
+    <button class="m-close" id="mClose">Close</button>`;
+  document.getElementById("modalBg").classList.add("show");
+  document.getElementById("mClose").onclick=closeModal;
+}
+function badgeDot(c){ return `<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="5" fill="${c}"/></svg>`; }
+function closeModal(){ document.getElementById("modalBg").classList.remove("show"); }
+
+/* ============================================================================
+   9) INIT + TIMERS + LISTENERS
+   ========================================================================= */
+function tick(){
+  // clock + now-line every second
+  updateNow();
+  // refresh countdown
+  state.refreshLeft--;
+  if(state.refreshLeft<=0){ loadAll(); }
+  document.getElementById("refreshNum").textContent=Math.max(0,state.refreshLeft);
+  // keep "TODAY" honest across midnight
+  if(!sameDate(state.viewDate,new Date()) && state._autoToday!==false){ /* leave manual navigation alone */ }
+}
+function shiftDay(delta){
+  const d=new Date(state.viewDate); d.setDate(d.getDate()+delta);
+  if(CONFIG.hideWeekends){ while(d.getDay()===0||d.getDay()===6){ d.setDate(d.getDate()+ (delta>=0?1:-1)); } }
+  state.viewDate=d; loadAll();
+}
+function initConfig(){
+  loadSaved();
+  document.getElementById("campusLabel").textContent=CONFIG.campus;
+  if(CONFIG.logoUrl){ document.getElementById("logoSlot").innerHTML=`<img src="${CONFIG.logoUrl}" style="width:100%;height:100%;object-fit:contain;border-radius:12px" alt="logo">`; }
+  const qd=new URLSearchParams(location.search).get("date");
+  if(qd && !isNaN(new Date(qd))) state.viewDate=new Date(qd);
+}
+function init(){
+  initConfig();
+  applyMode();
+  loadAll();
+  render();
+  setInterval(tick,1000);
+  // listeners
+  document.getElementById("navPrev").onclick=()=>shiftDay(-1);
+  document.getElementById("todayLabel").parentElement.addEventListener("dblclick",()=>{ state.viewDate=new Date(); loadAll(); });
+  document.getElementById("modalBg").onclick=(e)=>{ if(e.target.id==="modalBg") closeModal(); };
+  document.getElementById("setBg").onclick=(e)=>{ if(e.target.id==="setBg") closeSettings(); };
+  wireLongPress(document.getElementById("logoSlot"), openSettings);
+  document.addEventListener("keydown",(e)=>{ if(e.key==="ArrowLeft") shiftDay(-1); if(e.key==="ArrowRight") shiftDay(1); if(e.key==="Escape"){ closeModal(); closeSettings(); } if(e.key.toLowerCase()==="t"){state.viewDate=new Date();loadAll();} if(e.key.toLowerCase()==="s") openSettings(); });
+  let rt; window.addEventListener("resize",()=>{ clearTimeout(rt); rt=setTimeout(()=>{ const prev=state.mode; applyMode(); if(prev!==state.mode) render(); else if(state.mode!=="mobile") renderTimeline(); },180); });
+  window.addEventListener("orientationchange",()=>{ applyMode(); render(); });
+}
+/* ---------- on-device settings screen ---------- */
+function openSettings(){
+  const saved=store.get(K_ICS)||{};
+  const m=document.getElementById("setModal");
+  m.innerHTML =
+    `<h3>Room calendar settings</h3>
+     <p class="set-sub">Paste each room's Outlook published <b>.ics</b> link. Saved on this device — the board reloads on save, no rebuild needed.</p>
+     <div class="set-rows">`+
+     CONFIG.rooms.map(r=>`<label class="set-row"><span class="set-dot" style="background:${r.color}"></span><span class="set-code">${r.code}</span><input type="url" spellcheck="false" autocapitalize="off" data-room="${r.id}" value="${escapeHtml((saved[r.id]!==undefined?saved[r.id]:r.ics)||"")}" placeholder="https://outlook.office365.com/owa/calendar/.../reachcalendar.ics"></label>`).join("")+
+     `</div>
+     <div class="set-opts"><label class="set-opt"><span>Refresh every</span>
+       <select id="setRefresh">${[30,60,120,300].map(s=>`<option value="${s}" ${s===CONFIG.refreshSeconds?"selected":""}>${s} sec</option>`).join("")}</select></label></div>
+     <div class="set-btns"><button class="set-cancel" id="setCancel">Cancel</button><button class="set-save" id="setSave">Save &amp; reload</button></div>`;
+  document.getElementById("setBg").classList.add("show");
+  document.getElementById("setCancel").onclick=closeSettings;
+  document.getElementById("setSave").onclick=saveSettings;
+}
+function saveSettings(){
+  const map={};
+  document.querySelectorAll("#setModal input[data-room]").forEach(inp=>{ map[inp.dataset.room]=inp.value.trim(); });
+  store.set(K_ICS, map);
+  const rs=+document.getElementById("setRefresh").value; if(rs){ CONFIG.refreshSeconds=rs; store.set(K_REFRESH, rs); }
+  loadSaved(); closeSettings(); loadAll();
+}
+function closeSettings(){ document.getElementById("setBg").classList.remove("show"); }
+function wireLongPress(el, cb){
+  let t=null; const start=()=>{ t=setTimeout(cb,650); }; const cancel=()=>{ if(t){ clearTimeout(t); t=null; } };
+  el.addEventListener("touchstart",start,{passive:true}); el.addEventListener("touchend",cancel); el.addEventListener("touchmove",cancel);
+  el.addEventListener("mousedown",start); el.addEventListener("mouseup",cancel); el.addEventListener("mouseleave",cancel);
+}
+
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
