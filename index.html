@@ -420,10 +420,11 @@ function back(){if(navStack.length){route=navStack.pop();resetUI();render();}els
 let _backBound=false;
 function bindBack(){if(_backBound)return;_backBound=true;try{history.pushState({b:1},'');}catch(e){}
   window.addEventListener('popstate',function(){try{
-    if(document.getElementById('ov')){closeSheet();history.pushState({b:1},'');return;}   // close an open sheet/dialog first
-    if(navStack.length){back();history.pushState({b:1},'');return;}                        // step back inside the app
-    history.pushState({b:1},'');                                                           // at home: stay in the app (use the OS gesture to exit)
-  }catch(e){history.pushState({b:1},'');}});}
+    if(document.getElementById('ov')){closeSheet();}      // close an open sheet/dialog first
+    else if(navStack.length){back();}                     // step back inside the app
+    else{render();}                                       // at home: repaint & stay in the app (prevents iOS blank-snapshot)
+    history.pushState({b:1},'');
+  }catch(e){try{render();}catch(_){}history.pushState({b:1},'');}});}
 /* Pull-to-refresh: drag down at the top to reload latest data */
 let _ptrBound=false;
 function bindPullRefresh(){const sc=document.getElementById('view');if(!sc||_ptrBound)return;_ptrBound=true;
