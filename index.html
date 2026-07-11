@@ -348,7 +348,7 @@ function save(bump){if(bump!==false){DB.meta=DB.meta||{rev:0,backupRev:0};DB.met
 function normalize(){DB.events.forEach(e=>{e.start=to24(e.start);e.end=to24(e.end);});DB.meta.timeFmt=DB.meta.timeFmt||'12';}
 function prefillDemo(){const e=DB.events.find(x=>x.date==='2026-07-05');if(e&&Object.keys(e.records).length===0){const p=peopleForEvent(e);p.slice(0,4).forEach((x,i)=>e.records[x.id]=['present','present','late','present'][i]);e.status='completed';}}
 async function maybeSnapshot(force){DB.meta=DB.meta||{};const last=DB.meta.lastSnap||0;if(!force&&Date.now()-last<6*3600*1000)return;DB.meta.lastSnap=Date.now();const json=JSON.stringify(DB);try{await idbPut('snaps',{ts:Date.now(),at:new Date().toISOString(),size:json.length,data:json});const all=await idbAll('snaps');all.sort((a,b)=>b.ts-a.ts);for(const s of all.slice(15))await idbDel('snaps',s.ts);}catch(e){}persist();}
-async function init(){await openDB();let raw=await idbGet('kv','db');if(!raw){const ls=localStorage.getItem(KEY);if(ls){try{raw=JSON.parse(ls);}catch(e){}}}DB=raw||seed();migrate();normalize();prefillDemo();autoFinalizeDrafts();persist();await maybeSnapshot();restoreSession();odInitDeepLink();fbAutoConnect();render();bindBack();}
+async function init(){await openDB();let raw=await idbGet('kv','db');if(!raw){const ls=localStorage.getItem(KEY);if(ls){try{raw=JSON.parse(ls);}catch(e){}}}DB=raw||seed();migrate();normalize();prefillDemo();autoFinalizeDrafts();persist();await maybeSnapshot();restoreSession();odInitDeepLink();fbAutoConnect();render();}
 function uid(){return Math.random().toString(36).slice(2,9);}
 function seed(){
   const b1=uid(),b2=uid(),b3=uid(),sg=uid();
@@ -412,14 +412,6 @@ let evUI={editUp:false,editPast:false,selUp:new Set(),selPast:new Set()};
 function resetUI(){ui={edit:false,sel:new Set(),q:''};qUp='';qPast='';showArchived=false;upOpen=true;pastOpen=true;evUI={editUp:false,editPast:false,selUp:new Set(),selPast:new Set()};}
 function go(tab,sub,id,mode){navStack.push({...route});route={tab,sub:sub||null,id:id||null,mode:mode||null};if(mode==='mark'){markFilter='all';markQuery='';}if(tab==='calendar'&&!id){const t=new Date();cur={y:t.getFullYear(),m:t.getMonth()};selDay=null;mRange=null;calMin=true;agendaFilter='upcoming';weekAnchor=t.toISOString().slice(0,10);}resetUI();render();}
 function back(){if(navStack.length){route=navStack.pop();resetUI();render();}else go('calendar');}
-/* Device/browser back button acts as the in-app back button */
-let _backBound=false;
-function bindBack(){if(_backBound)return;_backBound=true;try{history.pushState({b:1},'');}catch(e){}
-  window.addEventListener('popstate',function(){try{
-    if(document.getElementById('ov')){closeSheet();history.pushState({b:1},'');return;}   // close an open sheet/dialog first
-    if(navStack.length){back();history.pushState({b:1},'');return;}                        // step back inside the app
-    history.pushState({b:1},'');                                                           // at home: stay in the app (use the OS gesture to exit)
-  }catch(e){history.pushState({b:1},'');}});}
 function goToday(){const t=new Date();cur={y:t.getFullYear(),m:t.getMonth()};selDay=null;mRange=null;calMin=false;render();}
 function addEventForCalendar(){editEvent(null,selDay);}
 let _rp={step:'from',fy:2026,fm:0,ty:2026,tm:11,year:2026,bundle:2016,mode:'month'};
