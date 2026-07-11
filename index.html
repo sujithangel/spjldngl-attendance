@@ -114,6 +114,16 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans
 .prow2 .n{font-weight:700;font-size:12.5px}
 .prow2 .stk{display:flex;height:7px;border-radius:4px;overflow:hidden;margin-top:6px;background:#eef1f7}
 .prow2 .stk i{height:100%}
+.dtwo{display:flex;gap:10px;align-items:flex-start}
+.tcol{flex:1;min-width:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px}
+.tcolh{font-size:9px;font-weight:800;letter-spacing:.05em;color:#9aa0ae;text-transform:uppercase;margin-bottom:11px}
+.crow{display:flex;align-items:center;gap:7px;margin-bottom:11px}.crow:last-child{margin-bottom:0}
+.crow .cg{flex:1;min-width:0}
+.crow .cn{font-size:11.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crow .cd{font-size:9px;color:var(--muted);font-weight:600;margin-top:1px}
+.cchip{font-size:12px;font-weight:900;flex-shrink:0}
+.crk{width:14px;font-size:11px;font-weight:900;color:#c1c6d6;text-align:center;flex-shrink:0}
+.crow .stk2{height:5px;border-radius:3px;overflow:hidden;background:#eef1f7;display:flex;margin-top:4px}.crow .stk2 i{height:100%}
 .ic{width:20px;height:20px;display:inline-block;vertical-align:middle;}
 .wrap{padding:14px;}
 .topbar{position:sticky;top:0;z-index:20;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));padding-left:calc(16px + env(safe-area-inset-left));padding-right:calc(16px + env(safe-area-inset-right));display:flex;align-items:center;gap:10px;background:var(--a1);color:#fff;}
@@ -762,20 +772,13 @@ function dashboardView(v){
   const tcards=todayEv.map(e=>{const st=eventStatus(e);const live=st.t==='In progress'||st.t==='Due';const mk=Object.keys(e.records||{}).length;const ppl=peopleForEvent(e).length;return `<div class="tcard"><span class="ttag ${live?'live':'up'}">${live?'<span class="ld"></span>IN PROGRESS':(st.t||'UPCOMING').toUpperCase()}</span><div class="tname">${esc(e.name)}</div><div class="tsub">${esc(e.start||'')}–${esc(e.end||'')} · ${esc(e.batches.map(batchName).join(', ')||'—')}</div>${live?`<button class="tmark" onclick="openMark('${e.id}')">${mk?'Continue marking':'Mark attendance'}</button>`:`<div class="tsub" style="margin-top:8px">${ppl} people</div>`}</div>`;}).join('');
   const upCards=upcoming.filter(e=>e.date>_t).slice(0,3).map(e=>`<div class="tcard"><span class="ttag up">UPCOMING</span><div class="tname">${esc(e.name)}</div><div class="tsub">${dayLbl(e.date)} · ${esc(e.start||'')}</div><div class="tsub" style="margin-top:8px">${esc(e.batches.map(batchName).join(', ')||'—')}</div></div>`).join('');
   const todaySection=`<div class="dsl">TODAY &amp; UPCOMING<a onclick="go('calendar')">All ›</a></div><div class="tscroll">${(tcards+upCards)||'<div class="tcard"><span class="ttag up">NONE</span><div class="tsub" style="margin-top:8px">No events scheduled.</div></div>'}</div>`;
-  // Past sessions infographic (trend + per-session present/late/absent bars)
+  // Recent sessions + Top batches, side by side (compact status lists)
   const past=notArch.filter(isCompleted).sort((a,b)=>b.date.localeCompare(a.date));
-  const trend=past.slice(0,7).reverse();
-  const tAvg=trend.length?Math.round(trend.reduce((s,e)=>s+attPct(e),0)/trend.length):0;
-  let pastSection='';
-  if(past.length)pastSection=`<div class="dsl">PAST SESSIONS<a onclick="go('reports')">Reports ›</a></div><div class="pcard">
-    <div class="ptrend">${trend.map(e=>{const p=attPct(e);return `<div class="pb"><div class="pcol"><div class="pfill" style="height:${Math.max(6,p)}%"></div></div><div class="plab">${dayNum(e.date)}</div></div>`;}).join('')}</div>
-    <div class="ptitle"><span>Attendance trend · last ${trend.length}</span><span>avg ${tAvg}%</span></div>
-    ${past.slice(0,4).map(e=>{const c=scount(e);const tot=c.total||1;const p=attPct(e);return `<div class="prow2" onclick="go('calendar',null,'${e.id}')"><div class="pdb"><div class="pdd">${dayNum(e.date)}</div><div class="pmm">${monY(e.date)}</div></div><div class="g"><div class="n">${esc(e.name)}</div><div class="stk"><i style="width:${(c.present/tot*100).toFixed(1)}%;background:#16a34a"></i><i style="width:${(c.late/tot*100).toFixed(1)}%;background:#d97706"></i><i style="width:${(c.absent/tot*100).toFixed(1)}%;background:#D0242F"></i></div></div>${pctChip(p)}</div>`;}).join('')}
-  </div>`;
-  // Batch leaderboard (scoped)
-  const lb=DB.batches.map(b=>{const bt=tally(evs,b.id);return {b,pct:bt.total?Math.round((bt.present+bt.late)/bt.total*100):null,tot:bt.total};}).filter(x=>x.tot>0).sort((a,b)=>b.pct-a.pct).slice(0,5);
-  let lbSection='';
-  if(lb.length)lbSection=`<div class="dsl">BATCH LEADERBOARD<a onclick="go('reports')">All ›</a></div><div class="lbc">${lb.map((x,i)=>{const col=x.pct>=85?'#16a34a':x.pct>=70?'#d97706':'#D0242F';return `<div class="lrw"><div class="lrk">${i+1}</div><div class="lbar"><div class="lbh"><span>${esc(x.b.name)}</span><span class="p" style="color:${col}">${x.pct}%</span></div><div class="ltk"><i style="width:${x.pct}%;background:${col}"></i></div></div></div>`;}).join('')}</div>`;
+  const lb=DB.batches.map(b=>{const bt=tally(evs,b.id);return {b,pct:bt.total?Math.round((bt.present+bt.late)/bt.total*100):null,tot:bt.total};}).filter(x=>x.tot>0).sort((a,b)=>b.pct-a.pct);
+  const colFor=p=>p>=85?'#16a34a':p>=70?'#d97706':'#D0242F';
+  const recentCol=`<div class="tcol"><div class="tcolh">Recent sessions</div>`+(past.length?past.slice(0,5).map(e=>{const p=attPct(e);const c=scount(e);const tot=c.total||1;return `<div class="crow" onclick="go('calendar',null,'${e.id}')"><div class="cg"><div class="cn">${esc(e.name)}</div><div class="cd">${toDMY(e.date)}</div><div class="stk2"><i style="width:${(c.present/tot*100).toFixed(1)}%;background:#16a34a"></i><i style="width:${(c.late/tot*100).toFixed(1)}%;background:#d97706"></i><i style="width:${(c.absent/tot*100).toFixed(1)}%;background:#D0242F"></i></div></div><div class="cchip" style="color:${colFor(p)}">${p}%</div></div>`;}).join(''):'<div class="cd">No sessions yet.</div>')+`</div>`;
+  const batchCol=`<div class="tcol"><div class="tcolh">Top batches</div>`+(lb.length?lb.slice(0,5).map((x,i)=>`<div class="crow"><div class="crk">${i+1}</div><div class="cg"><div class="cn">${esc(x.b.name)}</div><div class="stk2"><i style="width:${x.pct}%;background:${colFor(x.pct)}"></i></div></div><div class="cchip" style="color:${colFor(x.pct)}">${x.pct}%</div></div>`).join(''):'<div class="cd">No data yet.</div>')+`</div>`;
+  const twoCol=`<div class="dsl">OVERVIEW<a onclick="go('reports')">Reports ›</a></div><div class="dtwo">${recentCol}${batchCol}</div>`;
   const filled=Math.round(pp/10);
   const segbar=`<div class="dsegbar">${Array.from({length:10},(_,i)=>`<i class="${i<filled?'on':''}"></i>`).join('')}</div>`;
   v.innerHTML=`
@@ -787,7 +790,7 @@ function dashboardView(v){
       ${segbar}
     </div>
     <div class="dpills">${[[DB.students.length,'STUDENTS'],[evs.length,'EVENTS'],[DB.batches.length,'BATCHES'],[DB.staff.length,'LEADERS']].map(k=>`<div class="dpill"><b>${k[0]}</b><span>${k[1]}</span></div>`).join('')}</div>
-    <div class="dbody">${todaySection}${pastSection}${lbSection}</div>`;
+    <div class="dbody">${todaySection}${twoCol}</div>`;
 }
 
 /* ================= REPORTS ================= */
