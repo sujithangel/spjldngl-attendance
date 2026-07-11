@@ -38,6 +38,82 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans
 #ptr{position:fixed;top:calc(env(safe-area-inset-top) + 6px);left:50%;transform:translateX(-50%) translateY(-46px);width:36px;height:36px;border-radius:50%;background:#fff;box-shadow:0 3px 12px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;opacity:0;z-index:60;transition:opacity .18s;}
 #ptr .r{width:18px;height:18px;border:2.6px solid var(--a1);border-top-color:transparent;border-radius:50%;}
 #ptr.spin .r{animation:ptrsp .7s linear infinite}@keyframes ptrsp{to{transform:rotate(360deg)}}
+/* Home dashboard */
+@keyframes dpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.6)}}
+.dhero{background:#B01E27;color:#fff;padding:calc(14px + env(safe-area-inset-top)) 18px 30px;border-radius:0 0 24px 24px}
+.dtop{display:flex;align-items:center;justify-content:space-between}
+.dav{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff}
+.dseg{display:flex;background:rgba(0,0,0,.16);border-radius:10px;padding:3px;margin-top:12px}
+.dseg b{flex:1;text-align:center;font-size:11px;font-weight:800;padding:7px 0;border-radius:7px;color:rgba(255,255,255,.82);cursor:pointer}
+.dseg b.on{background:#fff;color:#B01E27}
+.dpickwrap{display:flex;justify-content:center;margin-top:11px}
+.dpick{background:rgba(255,255,255,.16);color:#fff;border:none;font-weight:800;font-size:13px;padding:7px 14px;border-radius:9px}
+.dhrow{display:flex;align-items:flex-end;justify-content:space-between;margin-top:12px}
+.dbig{font-size:46px;font-weight:900;line-height:.9;letter-spacing:-.02em}
+.dbig span{font-size:19px;opacity:.85}
+.dcap{font-size:11px;opacity:.92;font-weight:600;text-align:right;line-height:1.5}
+.dpills{display:flex;gap:8px;padding:0 16px;margin-top:-16px}
+.dpill{flex:1;background:#fff;border-radius:13px;padding:10px 4px;text-align:center;box-shadow:0 4px 14px rgba(20,25,45,.1)}
+.dpill b{display:block;font-size:16px;font-weight:900;color:#B01E27}
+.dpill span{font-size:7.5px;color:var(--muted);font-weight:800}
+.dbody{padding:0 16px 8px}
+.dsl{font-size:10.5px;font-weight:800;color:#9aa0ae;letter-spacing:.08em;margin:20px 2px 10px;display:flex;justify-content:space-between;align-items:center}
+.dsl a{font-size:10px;color:var(--a1);font-weight:800;letter-spacing:0}
+.livecard{background:#f0faf3;border:1px solid #bfe6cd;border-left:5px solid #16a34a;border-radius:16px;padding:15px;margin-bottom:11px}
+.lrow{display:flex;align-items:center;gap:7px}
+.ldot{width:8px;height:8px;border-radius:50%;background:#D0242F;animation:dpulse 1.3s infinite}
+.ltag{font-size:9px;font-weight:900;letter-spacing:.1em;color:#D0242F}
+.ltm{margin-left:auto;font-size:10px;font-weight:700;color:#5f8a70}
+.lname{font-size:18px;font-weight:900;margin-top:8px;color:#12241a}
+.lsub{font-size:11px;color:#5f8a70;margin-top:2px;font-weight:600}
+.lpw{height:7px;background:#cfeadd;border-radius:5px;margin-top:12px;overflow:hidden}
+.lpw i{display:block;height:100%;background:#16a34a;border-radius:5px}
+.lpt{font-size:10.5px;font-weight:700;color:#5f8a70;margin-top:6px}
+.lbtn{margin-top:12px;width:100%;background:#F5C443;color:#3a2c00;border:none;font-weight:900;font-size:13.5px;padding:12px;border-radius:11px}
+.dpast{background:#fff;border:1px solid var(--line);border-radius:14px;padding:2px 14px}
+.didle{text-align:center;font-size:11px;font-weight:700;color:#9aa0ae;padding:12px 0 10px;border-bottom:1px solid var(--line)}
+.prow{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
+.dpast .prow:first-of-type{border-top:none}
+.pdb{width:34px;text-align:center;flex-shrink:0}
+.pdd{font-size:16px;font-weight:900;line-height:1}
+.pmm{font-size:8.5px;color:var(--muted);font-weight:700}
+.pn{font-weight:700;font-size:12.5px}
+.ps{font-size:10px;color:var(--muted)}
+.dup{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.urow{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.urow+.urow{border-top:1px solid var(--line)}
+.ut{font-size:11px;font-weight:800;color:var(--muted);width:44px;flex-shrink:0}
+.un{font-size:12.5px;font-weight:700;color:#4b5163}
+.us{font-size:10px;color:#a7adc0;margin-top:1px}
+.uday{margin-left:auto;font-size:9px;font-weight:800;color:#b6bccb}
+.dsegbar{display:flex;gap:4px;margin-top:13px}
+.dsegbar i{height:6px;border-radius:4px;flex:1;background:rgba(255,255,255,.25)}
+.dsegbar i.on{background:#fff}
+.tscroll{display:flex;gap:10px;overflow-x:auto;padding:2px 16px 4px;-webkit-overflow-scrolling:touch}
+.tcard{min-width:200px;max-width:230px;background:#fff;border:1px solid var(--line);border-radius:16px;padding:13px;box-shadow:0 2px 10px rgba(20,25,45,.06)}
+.ttag{font-size:8.5px;font-weight:800;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:5px}
+.ttag.live{color:#D0242F;background:#fdecec}.ttag.up{color:#2563eb;background:#eaf1fe}
+.ttag .ld{width:6px;height:6px;border-radius:50%;background:#D0242F;animation:dpulse 1.3s infinite}
+.tname{font-weight:800;font-size:13.5px;margin-top:9px}
+.tsub{font-size:11px;color:var(--muted);margin-top:2px}
+.tmark{margin-top:11px;width:100%;background:#F5C443;color:#3a2c00;border:none;font-weight:900;font-size:11.5px;padding:9px;border-radius:9px}
+.lbc{background:#fff;border:1px solid var(--line);border-radius:15px;padding:15px}
+.lrw{display:flex;align-items:center;gap:11px;margin-bottom:14px}.lrw:last-child{margin-bottom:0}
+.lrk{width:16px;font-weight:900;color:#c1c6d6;font-size:13px;text-align:center}
+.lbar{flex:1}.lbh{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:5px}.lbh .p{font-weight:900}
+.ltk{height:8px;background:#eef1f7;border-radius:5px;overflow:hidden}.ltk i{display:block;height:100%;border-radius:5px}
+.pcard{background:#fff;border:1px solid var(--line);border-radius:15px;padding:14px}
+.ptrend{display:flex;align-items:flex-end;gap:7px;height:58px}
+.ptrend .pb{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;height:100%}
+.ptrend .pcol{width:100%;flex:1;background:#eef1f7;border-radius:5px 5px 2px 2px;display:flex;align-items:flex-end;overflow:hidden}
+.ptrend .pfill{width:100%;background:var(--a1);border-radius:5px 5px 2px 2px}
+.ptrend .plab{font-size:8px;color:var(--muted);font-weight:700}
+.ptitle{font-size:10px;color:var(--muted);font-weight:700;margin:9px 0 2px;display:flex;justify-content:space-between}
+.prow2{display:flex;align-items:center;gap:11px;padding:11px 0;border-top:1px solid var(--line)}
+.prow2 .g{flex:1;min-width:0}
+.prow2 .n{font-weight:700;font-size:12.5px}
+.prow2 .stk{display:flex;height:7px;border-radius:4px;overflow:hidden;margin-top:6px;background:#eef1f7}
+.prow2 .stk i{height:100%}
 .ic{width:20px;height:20px;display:inline-block;vertical-align:middle;}
 .wrap{padding:14px;}
 .topbar{position:sticky;top:0;z-index:20;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top));padding-left:calc(16px + env(safe-area-inset-left));padding-right:calc(16px + env(safe-area-inset-right));display:flex;align-items:center;gap:10px;background:var(--a1);color:#fff;}
@@ -404,7 +480,7 @@ let _snackT;
 function snack(msg,undoFn,ms){const b=$('snack');b.innerHTML=esc(msg)+(undoFn?' <button id="undoBtn">UNDO</button>':'');b.classList.add('show');if(undoFn)$('undoBtn').onclick=()=>{b.classList.remove('show');undoFn();};clearTimeout(_snackT);_snackT=setTimeout(()=>b.classList.remove('show'),ms||1500);}
 
 /* ================= ROUTER ================= */
-let route={tab:'calendar',sub:null,id:null,mode:null};
+let route={tab:'dashboard',sub:null,id:null,mode:null};
 let markFilter='all',markQuery='';
 let cur={y:2026,m:6}, selDay=null;
 let ui={edit:false,sel:new Set(),q:''};
@@ -415,7 +491,7 @@ let calMin=true,mRange=null,navStack=[],agendaFilter='upcoming',weekAnchor=null,
 let evUI={editUp:false,editPast:false,selUp:new Set(),selPast:new Set()};
 function resetUI(){ui={edit:false,sel:new Set(),q:''};qUp='';qPast='';showArchived=false;upOpen=true;pastOpen=true;evUI={editUp:false,editPast:false,selUp:new Set(),selPast:new Set()};}
 function go(tab,sub,id,mode){navStack.push({...route});route={tab,sub:sub||null,id:id||null,mode:mode||null};if(mode==='mark'){markFilter='all';markQuery='';}if(tab==='calendar'&&!id){const t=new Date();cur={y:t.getFullYear(),m:t.getMonth()};selDay=null;mRange=null;calMin=true;agendaFilter='upcoming';weekAnchor=t.toISOString().slice(0,10);}resetUI();render();}
-function back(){if(navStack.length){route=navStack.pop();resetUI();render();}else go('calendar');}
+function back(){if(navStack.length){route=navStack.pop();resetUI();render();}else go('dashboard');}
 /* Device/browser back button acts as the in-app back button */
 let _backBound=false;
 function bindBack(){if(_backBound)return;_backBound=true;try{history.pushState({b:1},'');}catch(e){}
@@ -468,13 +544,13 @@ function render(){
   else if(route.tab==='more')moreView(v);
   window.scrollTo(0,0);
 }
-function renderNav(){const tabs=[['calendar','cal','Events'],['dashboard','grid','Dashboard'],['reports','doc','Reports'],['more','more','More']];$('nav').innerHTML=tabs.map(([t,i,l])=>`<button class="${route.tab===t?'active':''}" onclick="go('${t}')">${ico(i)}${l}</button>`).join('');}
+function renderNav(){const tabs=[['dashboard','grid','Home'],['calendar','cal','Events'],['reports','doc','Reports'],['more','more','More']];$('nav').innerHTML=tabs.map(([t,i,l])=>`<button class="${route.tab===t?'active':''}" onclick="go('${t}')">${ico(i)}${l}</button>`).join('');}
 function head(title,{back,right,left,logo}={}){return `<div class="topbar">${back?`<button class="hbtn" onclick="${back}">${ico('back')}</button>`:(logo?logoHTML(34):'<span class="hspace"></span>')}<h1 class="${left||logo?'left':''}">${esc(title)}</h1>${right||'<span class="hspace"></span>'}</div>`;}
 function renderHeader(){let h='';
   if(route.tab==='calendar'&&!route.id)h=head('Events',{logo:true,right:`<button class="hbtn g" onclick="addEventForCalendar()">${ico('plus')}</button>`});
   else if(route.tab==='calendar'&&route.mode==='mark')h=head('Mark Attendance',{back:`back()`,right:`<button class="hbtn g" onclick="finalize('${route.id}')">${ico('check')}</button>`});
   else if(route.tab==='calendar'&&route.id)h=head('Event Details',{back:`back()`});
-  else if(route.tab==='dashboard')h=head('Dashboard',{logo:true});
+  else if(route.tab==='dashboard')h='';
   else if(route.tab==='reports'&&route.sub==='export')h=head('Export Report',{back:`back()`});
   else if(route.tab==='reports')h=head('Reports',{logo:true});
   else if(route.tab==='more'&&!route.sub)h=head('More / Settings',{logo:true});
@@ -498,7 +574,7 @@ function loginView(v){
   },80);
 }
 function findUser(u){u=(u||'').trim().toLowerCase();return DB.users.find(x=>x.u.toLowerCase()===u);}
-function doLogin(){const rec=findUser($('luser').value);const pw=$('lpw').value;if(!rec||rec.ph!==hpw(pw)){toast('Incorrect username or password');return;}const wantBio=$('lbio')&&$('lbio').checked;startSession(rec);go('calendar');setTimeout(checkAutoBackup,600);if(wantBio)bioEnable(rec.u,pw);}
+function doLogin(){const rec=findUser($('luser').value);const pw=$('lpw').value;if(!rec||rec.ph!==hpw(pw)){toast('Incorrect username or password');return;}const wantBio=$('lbio')&&$('lbio').checked;startSession(rec);go('dashboard');setTimeout(checkAutoBackup,600);if(wantBio)bioEnable(rec.u,pw);}
 function logout(){if(confirm('Sign out now?')){endSession();render();}}
 /* ---- Biometric unlock: native app (plugin) OR web (WebAuthn Face ID/fingerprint) ---- */
 const BIO_SRV='spj-attendance';
@@ -531,14 +607,14 @@ async function bioUnlock(){
     try{await p.verifyIdentity({reason:'Unlock SPJ Attendance',title:'Unlock',subtitle:'SPJ Attendance',useFallback:true});
       const c=await p.getCredentials({server:BIO_SRV});if(!c||!c.username){toast('No saved login — sign in with password');return;}
       const rec=findUser(c.username);if(!rec||rec.ph!==hpw(c.password)){toast('Saved login changed — use your password');await bioDisable();render();return;}
-      startSession(rec);go('calendar');setTimeout(checkAutoBackup,600);
+      startSession(rec);go('dashboard');setTimeout(checkAutoBackup,600);
     }catch(e){}return;}
   // web WebAuthn
   const id=localStorage.getItem('spj_bio_cred'),un=localStorage.getItem('spj_bio_user');
   if(!id||!un){toast('Set up biometric unlock first');return;}
   try{await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{type:'public-key',id:_ub64(id).buffer,transports:['internal']}],userVerification:'required',timeout:60000,rpId:location.hostname}});
     const rec=findUser(un);if(!rec){toast('Saved login no longer exists — use password');await bioDisable();render();return;}
-    startSession(rec);go('calendar');setTimeout(checkAutoBackup,600);
+    startSession(rec);go('dashboard');setTimeout(checkAutoBackup,600);
   }catch(e){/* cancelled/failed → stay on password screen */}}
 function bioToggle(){if(!isNative()&&!waSupported()){toast('This device/browser has no biometric support');return;}
   if(bioEnabled()){if(confirm('Turn off biometric unlock?')){bioDisable().then(render);}return;}
@@ -655,39 +731,63 @@ function draftPause(eid){const e=DB.events.find(x=>x.id===eid);save();snack('Dra
 /* ================= DASHBOARD ================= */
 function scopeEvents(){const s=dashScope;const base=DB.events.filter(e=>!e.archived);if(s.type==='year')return base.filter(e=>+e.date.slice(0,4)===s.year);if(s.type==='month')return base.filter(e=>{const d=new Date(e.date+'T00:00:00');return d.getFullYear()===s.year&&d.getMonth()===s.month;});if(s.type==='batch')return base.filter(e=>e.batches.includes(s.batch)||DB.students.some(st=>st.batch===s.batch&&e.students.includes(st.id)));return base;}
 function attnRow(icon,color,title,sub,onclick){return `<div class="sitem" onclick="${onclick}"><div class="ic0" style="border-color:${color};color:${color}">${ico(icon)}</div><div class="grow"><div style="font-weight:700;font-size:14px">${title}</div><div class="mini">${sub}</div></div><span style="color:var(--dim)">${ico('chev')}</span></div>`;}
+function ringSVG(pct){const r=40,c=2*Math.PI*r,off=c*(1-Math.max(0,Math.min(100,pct))/100);return `<svg width="94" height="94" viewBox="0 0 96 96"><circle cx="48" cy="48" r="40" fill="none" stroke="#f1d3d5" stroke-width="12"/><circle cx="48" cy="48" r="40" fill="none" stroke="var(--a1)" stroke-width="12" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 48 48)"/></svg>`;}
+function greeting(){const h=new Date().getHours();return h<12?'Good morning':h<17?'Good afternoon':'Good evening';}
+function stCol(c){return c==='green'?'#16a34a':c==='red'?'#D0242F':c==='orange'?'#d97706':c==='blue'?'#2563eb':'#8a90a6';}
+function dashMark(){const _t=new Date().toISOString().slice(0,10);const td=DB.events.filter(e=>!e.archived&&e.date===_t);if(td.length)openMark(td[0].id);else{toast('No events today');go('calendar');}}
 function dashboardView(v){
   if(!dashScope.batch)dashScope.batch=DB.batches[0]?.id;
   const evs=scopeEvents();const bId=dashScope.type==='batch'?dashScope.batch:null;const t=tally(evs,bId);
-  const total=t.total||1,pp=Math.round(t.present/total*100);
-  const scopeLbl=dashScope.type==='batch'?esc(batchName(dashScope.batch)):dashScope.type==='month'?MONTHS[dashScope.month]+' '+dashScope.year:dashScope.type==='year'?dashScope.year:'All time';
+  const pp=t.total?Math.round((t.present+t.late)/t.total*100):0;
+  const scopeLbl=dashScope.type==='batch'?esc(batchName(dashScope.batch)):dashScope.type==='month'?MONTHS[dashScope.month]+' '+dashScope.year:dashScope.type==='year'?String(dashScope.year):'All time';
   let second='';
-  if(dashScope.type==='year')second=`<button class="btn ghost" onclick="openDashPicker('year')">${ico('cal')} ${dashScope.year} ▾</button>`;
-  else if(dashScope.type==='month')second=`<button class="btn ghost" onclick="openDashPicker('month')">${ico('cal')} ${MONTHS[dashScope.month]} ${dashScope.year} ▾</button>`;
-  else if(dashScope.type==='batch')second=`<select class="t" onchange="dashScope.batch=this.value;render()">${DB.batches.map(b=>`<option value="${b.id}" ${b.id===dashScope.batch?'selected':''}>${esc(b.name)}</option>`).join('')}</select>`;
-  const marked=[...evs].filter(e=>Object.keys(e.records||{}).length).sort((a,b)=>a.date.localeCompare(b.date)).slice(-8);
-  const spark=marked.length?`<div class="spark">${marked.map(e=>{const p=attPct(e);return `<span style="height:${Math.max(6,p)}%" title="${wday(e.date)} ${dayNum(e.date)} · ${p}%"></span>`;}).join('')}</div><div class="mini" style="margin-top:6px">Trend · last ${marked.length} marked events</div>`:'<div class="mini" style="margin-top:10px">No marked events yet in this scope.</div>';
-  const drafts=DB.events.filter(e=>!e.archived&&eventStatus(e).t==='Draft');
-  const noshows=DB.events.filter(e=>!e.archived&&eventStatus(e).t==='No Show');
-  const unassigned=DB.students.filter(isUnassigned).length;
-  let low=null;DB.batches.forEach(b=>{const bt=tally(evs,b.id);if(bt.total){const p=Math.round((bt.present+bt.late)/bt.total*100);if(low===null||p<low.p)low={b,p};}});
-  const attn=[];
-  if(drafts.length)attn.push(attnRow('clock','#d97706',drafts.length+' attendance draft'+(drafts.length>1?'s':'')+' in progress','Finish marking',"go('calendar')"));
-  if(noshows.length)attn.push(attnRow('x','#D0242F',noshows.length+' event'+(noshows.length>1?'s':'')+' with no attendance','Review no-shows',"go('more','events')"));
-  if(unassigned)attn.push(attnRow('users','#d97706',unassigned+' student'+(unassigned>1?'s':'')+' unassigned','Assign to a batch',"go('more','students')"));
-  if(low&&low.p<75)attn.push(attnRow('cap','#D0242F','Lowest batch · '+esc(low.b.name)+' ('+low.p+'%)','View this batch',"dashScope.type='batch';dashScope.batch='"+low.b.id+"';render()"));
-  const recent=[...DB.events].filter(e=>!e.archived&&Object.keys(e.records).length).sort((x,y)=>y.date.localeCompare(x.date)).slice(0,5);
-  v.innerHTML=`<div class="wrap">
-    <div class="chips2">${[['all','All time'],['year','Year'],['month','Month'],['batch','Batch']].map(([k,l])=>`<button class="${dashScope.type===k?'on':''}" onclick="dashScope.type='${k}';render()">${l}</button>`).join('')}</div>
-    ${second?`<div style="margin-bottom:12px">${second}</div>`:''}
-    <div class="card"><div class="dash-head"><span class="reddot"></span>Attendance · ${scopeLbl}</div>
-      <div style="display:flex;align-items:baseline;gap:12px"><div style="font-size:42px;font-weight:800;color:var(--a1);line-height:1">${pp}%</div><div class="mini">present + late<br>${t.present+t.late} of ${t.total} marks · ${evs.length} events</div></div>
-      ${spark}
+  if(dashScope.type==='year')second=`<button class="btn ghost sm" style="width:auto" onclick="openDashPicker('year')">${ico('cal')} ${dashScope.year} ▾</button>`;
+  else if(dashScope.type==='month')second=`<button class="btn ghost sm" style="width:auto" onclick="openDashPicker('month')">${ico('cal')} ${MONTHS[dashScope.month]} ${dashScope.year} ▾</button>`;
+  else if(dashScope.type==='batch')second=`<select class="t" style="margin:0" onchange="dashScope.batch=this.value;render()">${DB.batches.map(b=>`<option value="${b.id}" ${b.id===dashScope.batch?'selected':''}>${esc(b.name)}</option>`).join('')}</select>`;
+  const _t=new Date().toISOString().slice(0,10);
+  const notArch=DB.events.filter(e=>!e.archived);
+  const inprog=notArch.filter(e=>e.date===_t&&eventStatus(e).t==='In progress');
+  const inSet=new Set(inprog.map(e=>e.id));
+  const upcoming=notArch.filter(e=>e.status!=='completed'&&!inSet.has(e.id)&&e.date>=_t&&eventStatus(e).t!=='In progress').sort((a,b)=>((a.date+(a.start||''))).localeCompare(b.date+(b.start||''))).slice(0,4);
+  const recent=notArch.filter(isCompleted).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
+  const seg=['all','year','month','batch'].map(k=>`<b class="${dashScope.type===k?'on':''}" onclick="dashScope.type='${k}';render()">${k==='all'?'All time':k[0].toUpperCase()+k.slice(1)}</b>`).join('');
+  let picker='';
+  if(dashScope.type==='year')picker=`<div class="dpick" onclick="openDashPicker('year')">${dashScope.year} ▾</div>`;
+  else if(dashScope.type==='month')picker=`<div class="dpick" onclick="openDashPicker('month')">${MONTHS[dashScope.month]} ${dashScope.year} ▾</div>`;
+  else if(dashScope.type==='batch')picker=`<select class="dpick" onchange="dashScope.batch=this.value;render()">${DB.batches.map(b=>`<option value="${b.id}" ${b.id===dashScope.batch?'selected':''}>${esc(b.name)}</option>`).join('')}</select>`;
+  const pctChip=p=>{const c=p>=85?['#e9f8ef','#16a34a']:p>=70?['#fef3e2','#d97706']:['#fdecec','#D0242F'];return `<span style="font-weight:900;font-size:12px;padding:2px 9px;border-radius:8px;background:${c[0]};color:${c[1]}">${p}%</span>`;};
+  const dayLbl=d=>{if(d===_t)return'TODAY';const dt=new Date();dt.setDate(dt.getDate()+1);if(d===dt.toISOString().slice(0,10))return'TMRW';return (wday(d)+' '+dayNum(d)).toUpperCase();};
+  // Today's events + a few upcoming → horizontal cards
+  const todayEv=notArch.filter(e=>e.date===_t).sort((a,b)=>(a.start||'').localeCompare(b.start||''));
+  const tcards=todayEv.map(e=>{const st=eventStatus(e);const live=st.t==='In progress'||st.t==='Due';const mk=Object.keys(e.records||{}).length;const ppl=peopleForEvent(e).length;return `<div class="tcard"><span class="ttag ${live?'live':'up'}">${live?'<span class="ld"></span>IN PROGRESS':(st.t||'UPCOMING').toUpperCase()}</span><div class="tname">${esc(e.name)}</div><div class="tsub">${esc(e.start||'')}–${esc(e.end||'')} · ${esc(e.batches.map(batchName).join(', ')||'—')}</div>${live?`<button class="tmark" onclick="openMark('${e.id}')">${mk?'Continue marking':'Mark attendance'}</button>`:`<div class="tsub" style="margin-top:8px">${ppl} people</div>`}</div>`;}).join('');
+  const upCards=upcoming.filter(e=>e.date>_t).slice(0,3).map(e=>`<div class="tcard"><span class="ttag up">UPCOMING</span><div class="tname">${esc(e.name)}</div><div class="tsub">${dayLbl(e.date)} · ${esc(e.start||'')}</div><div class="tsub" style="margin-top:8px">${esc(e.batches.map(batchName).join(', ')||'—')}</div></div>`).join('');
+  const todaySection=`<div class="dsl">TODAY &amp; UPCOMING<a onclick="go('calendar')">All ›</a></div><div class="tscroll">${(tcards+upCards)||'<div class="tcard"><span class="ttag up">NONE</span><div class="tsub" style="margin-top:8px">No events scheduled.</div></div>'}</div>`;
+  // Past sessions infographic (trend + per-session present/late/absent bars)
+  const past=notArch.filter(isCompleted).sort((a,b)=>b.date.localeCompare(a.date));
+  const trend=past.slice(0,7).reverse();
+  const tAvg=trend.length?Math.round(trend.reduce((s,e)=>s+attPct(e),0)/trend.length):0;
+  let pastSection='';
+  if(past.length)pastSection=`<div class="dsl">PAST SESSIONS<a onclick="go('reports')">Reports ›</a></div><div class="pcard">
+    <div class="ptrend">${trend.map(e=>{const p=attPct(e);return `<div class="pb"><div class="pcol"><div class="pfill" style="height:${Math.max(6,p)}%"></div></div><div class="plab">${dayNum(e.date)}</div></div>`;}).join('')}</div>
+    <div class="ptitle"><span>Attendance trend · last ${trend.length}</span><span>avg ${tAvg}%</span></div>
+    ${past.slice(0,4).map(e=>{const c=scount(e);const tot=c.total||1;const p=attPct(e);return `<div class="prow2" onclick="go('calendar',null,'${e.id}')"><div class="pdb"><div class="pdd">${dayNum(e.date)}</div><div class="pmm">${monY(e.date)}</div></div><div class="g"><div class="n">${esc(e.name)}</div><div class="stk"><i style="width:${(c.present/tot*100).toFixed(1)}%;background:#16a34a"></i><i style="width:${(c.late/tot*100).toFixed(1)}%;background:#d97706"></i><i style="width:${(c.absent/tot*100).toFixed(1)}%;background:#D0242F"></i></div></div>${pctChip(p)}</div>`;}).join('')}
+  </div>`;
+  // Batch leaderboard (scoped)
+  const lb=DB.batches.map(b=>{const bt=tally(evs,b.id);return {b,pct:bt.total?Math.round((bt.present+bt.late)/bt.total*100):null,tot:bt.total};}).filter(x=>x.tot>0).sort((a,b)=>b.pct-a.pct).slice(0,5);
+  let lbSection='';
+  if(lb.length)lbSection=`<div class="dsl">BATCH LEADERBOARD<a onclick="go('reports')">All ›</a></div><div class="lbc">${lb.map((x,i)=>{const col=x.pct>=85?'#16a34a':x.pct>=70?'#d97706':'#D0242F';return `<div class="lrw"><div class="lrk">${i+1}</div><div class="lbar"><div class="lbh"><span>${esc(x.b.name)}</span><span class="p" style="color:${col}">${x.pct}%</span></div><div class="ltk"><i style="width:${x.pct}%;background:${col}"></i></div></div></div>`;}).join('')}</div>`;
+  const filled=Math.round(pp/10);
+  const segbar=`<div class="dsegbar">${Array.from({length:10},(_,i)=>`<i class="${i<filled?'on':''}"></i>`).join('')}</div>`;
+  v.innerHTML=`
+    <div class="dhero">
+      <div class="dtop">${logoHTML(36)}<div class="dav">${initials(SESSION?SESSION.u:'',' ')}</div></div>
+      <div class="dseg">${seg}</div>
+      ${picker?`<div class="dpickwrap">${picker}</div>`:''}
+      <div class="dhrow"><div class="dbig">${pp}<span>%</span></div><div class="dcap">Attendance · ${scopeLbl}<br>${t.present+t.late} of ${t.total} marks</div></div>
+      ${segbar}
     </div>
-    <div class="dash-tiles" style="margin-bottom:4px"><div class="t3 p"><b>${t.present}</b><span>PRESENT</span></div><div class="t3 a"><b>${t.absent}</b><span>ABSENT</span></div><div class="t3 l"><b>${t.late}</b><span>LATE</span></div></div>
-    <div class="sectlabel">Needs attention</div>
-    <div class="slist">${attn.join('')||`<div class="sitem"><div class="ic0" style="border-color:var(--present);color:var(--present)">${ico('check')}</div><div class="grow"><div style="font-weight:700;font-size:14px">All clear</div><div class="mini">Nothing needs attention right now.</div></div></div>`}</div>
-    <div class="sectlabel">Recent attendance <span class="mini" style="font-weight:600">last 5</span></div>
-    ${recent.length?recent.map(e=>{const c=scount(e);const r=c.total?Math.round((c.present+c.late)/c.total*100):0;return `<div class="card tap" style="padding:12px 14px" onclick="go('calendar',null,'${e.id}')"><div class="row"><div class="datebadge" style="width:44px"><div class="wd">${wday(e.date)}</div><div class="d" style="font-size:18px">${dayNum(e.date)}</div><div class="m">${monY(e.date)}</div></div><div class="grow"><div class="title" style="font-size:14.5px">${esc(e.name)}</div><div class="mini">${c.present}P · ${c.absent}A · ${c.late}L</div></div><div style="font-weight:800;font-size:18px;color:var(--a1)">${r}%</div></div></div>`;}).join(''):'<div class="empty">'+ico('grid')+'<div>No attendance yet.</div></div>'}</div>`;
+    <div class="dpills">${[[DB.students.length,'STUDENTS'],[evs.length,'EVENTS'],[DB.batches.length,'BATCHES'],[DB.staff.length,'LEADERS']].map(k=>`<div class="dpill"><b>${k[0]}</b><span>${k[1]}</span></div>`).join('')}</div>
+    <div class="dbody">${todaySection}${pastSection}${lbSection}</div>`;
 }
 
 /* ================= REPORTS ================= */
