@@ -6,6 +6,13 @@
 <meta name="theme-color" content="#D0242F">
 <title>SPJ Attendance</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#D0242F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Attendance">
+<link rel="apple-touch-icon" href="icon-192.png">
 <script src="https://cdn.jsdelivr.net/npm/firebase@10/firebase-app-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10/firebase-auth-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10/firebase-firestore-compat.js"></script>
@@ -1155,5 +1162,6 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&SESSION&&
 setInterval(()=>{const c=$('clock');if(c)c.textContent=new Date().toLocaleTimeString('en-GB');},1000);
 init();
 </script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('service-worker.js').catch(function(){});});}</script>
 </body>
 </html>
