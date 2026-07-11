@@ -470,35 +470,55 @@ function loginView(v){
     </div><div class="brandline">🔒 On-device only · auto sign-out after 2 hours</div></div>`;
   setTimeout(()=>{const el=$('luser');if(el)el.focus();},50);
   setTimeout(async()=>{const row=$('biorow');if(!row)return;if(!(await bioAvailable()))return;
-    if(bioEnabled()){row.innerHTML=`<button class="btn subtle" style="margin-top:10px" onclick="bioUnlock()">${ico('lock')} Unlock with biometrics / device PIN</button>`;bioUnlock();}
+    if(bioEnabled()){row.innerHTML=`<button class="btn subtle" style="margin-top:10px" onclick="bioUnlock()">${ico('lock')} Unlock with Face ID / fingerprint</button>`;if(isNative())bioUnlock();}
     else{row.innerHTML=`<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-top:12px"><input type="checkbox" id="lbio" style="width:auto"> Enable biometric / device-PIN unlock</label>`;}
   },80);
 }
 function findUser(u){u=(u||'').trim().toLowerCase();return DB.users.find(x=>x.u.toLowerCase()===u);}
 function doLogin(){const rec=findUser($('luser').value);const pw=$('lpw').value;if(!rec||rec.ph!==hpw(pw)){toast('Incorrect username or password');return;}const wantBio=$('lbio')&&$('lbio').checked;startSession(rec);go('calendar');setTimeout(checkAutoBackup,600);if(wantBio)bioEnable(rec.u,pw);}
 function logout(){if(confirm('Sign out now?')){endSession();render();}}
-/* ---- Biometric / device-PIN unlock (native app only) ---- */
+/* ---- Biometric unlock: native app (plugin) OR web (WebAuthn Face ID/fingerprint) ---- */
 const BIO_SRV='spj-attendance';
 function bioPlugin(){return (window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.NativeBiometric)||null;}
 function bioEnabled(){try{return localStorage.getItem('spj_bio')==='1';}catch(e){return false;}}
-async function bioAvailable(){const p=bioPlugin();if(!p||!isNative())return false;try{const r=await p.isAvailable({useFallback:true});return !!(r&&r.isAvailable);}catch(e){return false;}}
-async function bioEnable(username,password){const p=bioPlugin();if(!p){toast('Biometric unlock works in the installed app only');return false;}
-  try{await p.verifyIdentity({reason:'Confirm to enable unlock',title:'Enable unlock',subtitle:'SPJ Attendance',useFallback:true});
-    await p.setCredentials({username,password,server:BIO_SRV});
-    try{localStorage.setItem('spj_bio','1');}catch(e){}
-    toast('Biometric / device-PIN unlock enabled');return true;
-  }catch(e){toast('Could not enable unlock ('+(e&&e.message||'cancelled')+')');return false;}}
-async function bioDisable(){const p=bioPlugin();try{if(p)await p.deleteCredentials({server:BIO_SRV});}catch(e){}try{localStorage.removeItem('spj_bio');}catch(e){}toast('Unlock turned off');}
-async function bioUnlock(){const p=bioPlugin();if(!p)return;
-  try{await p.verifyIdentity({reason:'Unlock SPJ Attendance',title:'Unlock',subtitle:'SPJ Attendance',useFallback:true});
-    const c=await p.getCredentials({server:BIO_SRV});
-    if(!c||!c.username){toast('No saved login — sign in with password');return;}
-    const rec=findUser(c.username);
-    if(!rec||rec.ph!==hpw(c.password)){toast('Saved login changed — use your password');await bioDisable();render();return;}
+function waSupported(){return !!(window.PublicKeyCredential&&navigator.credentials&&navigator.credentials.create);}
+async function waPlatform(){try{return waSupported()&&await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();}catch(e){return false;}}
+async function bioAvailable(){if(isNative()){const p=bioPlugin();if(!p)return false;try{const r=await p.isAvailable({useFallback:true});return !!(r&&r.isAvailable);}catch(e){return false;}}return await waPlatform();}
+async function bioEnable(username,password){
+  if(isNative()){const p=bioPlugin();if(!p){toast('Biometric unlock works in the installed app only');return false;}
+    try{await p.verifyIdentity({reason:'Confirm to enable unlock',title:'Enable unlock',subtitle:'SPJ Attendance',useFallback:true});
+      await p.setCredentials({username,password,server:BIO_SRV});try{localStorage.setItem('spj_bio','1');}catch(e){}
+      toast('Biometric / device-PIN unlock enabled');return true;
+    }catch(e){toast('Could not enable unlock ('+(e&&e.message||'cancelled')+')');return false;}}
+  // web WebAuthn
+  if(!(await waPlatform())){toast('Face ID / fingerprint not available on this device');return false;}
+  try{const cred=await navigator.credentials.create({publicKey:{
+      challenge:crypto.getRandomValues(new Uint8Array(32)),
+      rp:{name:'SPJ Attendance',id:location.hostname},
+      user:{id:crypto.getRandomValues(new Uint8Array(16)),name:username,displayName:username},
+      pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'preferred'},
+      timeout:60000,attestation:'none'}});
+    try{localStorage.setItem('spj_bio','1');localStorage.setItem('spj_bio_user',username);localStorage.setItem('spj_bio_cred',_b64(cred.rawId));}catch(e){}
+    toast('Biometric unlock enabled');return true;
+  }catch(e){toast('Could not enable ('+(e&&e.message||'cancelled')+')');return false;}}
+async function bioDisable(){if(isNative()){const p=bioPlugin();try{if(p)await p.deleteCredentials({server:BIO_SRV});}catch(e){}}try{localStorage.removeItem('spj_bio');localStorage.removeItem('spj_bio_user');localStorage.removeItem('spj_bio_cred');}catch(e){}toast('Unlock turned off');}
+async function bioUnlock(){
+  if(isNative()){const p=bioPlugin();if(!p)return;
+    try{await p.verifyIdentity({reason:'Unlock SPJ Attendance',title:'Unlock',subtitle:'SPJ Attendance',useFallback:true});
+      const c=await p.getCredentials({server:BIO_SRV});if(!c||!c.username){toast('No saved login — sign in with password');return;}
+      const rec=findUser(c.username);if(!rec||rec.ph!==hpw(c.password)){toast('Saved login changed — use your password');await bioDisable();render();return;}
+      startSession(rec);go('calendar');setTimeout(checkAutoBackup,600);
+    }catch(e){}return;}
+  // web WebAuthn
+  const id=localStorage.getItem('spj_bio_cred'),un=localStorage.getItem('spj_bio_user');
+  if(!id||!un){toast('Set up biometric unlock first');return;}
+  try{await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{type:'public-key',id:_ub64(id).buffer,transports:['internal']}],userVerification:'required',timeout:60000,rpId:location.hostname}});
+    const rec=findUser(un);if(!rec){toast('Saved login no longer exists — use password');await bioDisable();render();return;}
     startSession(rec);go('calendar');setTimeout(checkAutoBackup,600);
-  }catch(e){/* cancelled or failed → stay on the password screen */}}
-function bioToggle(){if(!isNative()){toast('Available in the installed Android / iOS app');return;}
-  if(bioEnabled()){if(confirm('Turn off biometric / device-PIN unlock?')){bioDisable().then(render);}return;}
+  }catch(e){/* cancelled/failed → stay on password screen */}}
+function bioToggle(){if(!isNative()&&!waSupported()){toast('This device/browser has no biometric support');return;}
+  if(bioEnabled()){if(confirm('Turn off biometric unlock?')){bioDisable().then(render);}return;}
   const pw=prompt('Enter your current password to enable unlock:');if(!pw)return;const rec=findUser(SESSION.u);
   if(!rec||rec.ph!==hpw(pw)){toast('Password incorrect');return;}
   bioEnable(rec.u,pw).then(ok=>{if(ok)render();});}
@@ -715,7 +735,7 @@ function moreView(v){
       <div class="mini" style="margin-top:10px;display:flex;align-items:center;gap:6px">${ico('clock')} Last backup: <b>${DB.meta.lastBackupAt?fmtDT(DB.meta.lastBackupAt):'never'}</b></div></div>
     ${dirty?`<div class="banner warn">${ico('info')}<div><b>Unsaved changes since last backup.</b> Back up in Settings to keep your data safe.</div></div>`:''}
     <div class="sectlabel">Manage</div><div class="slist">${item("go('more','students')",'users','Students',DB.students.length+' students','#3b82f6')}${item("go('more','batches')",'cap','Batches',DB.batches.length+' batches · enrolled students','#7c5cff')}${item("go('more','staff')",'crown','Staff & Leaders',DB.staff.length+' staff','#f59e0b')}${item("go('more','events')",'cal','Events',DB.events.filter(e=>!e.archived).length+' active · '+DB.events.filter(e=>e.archived).length+' archived','#0891b2')}</div>
-    <div class="sectlabel">Security</div><div class="slist">${isSuper?item("go('more','users')",'shield','User Management',DB.users.length+' users · recovery','#D0242F'):''}${item("changeOwnPw()",'lock','Change My Password','Update your password','#D0242F')}${isNative()?item("bioToggle()",'lock','Biometric / Device Unlock',(bioEnabled()?'On · tap to turn off':'Off · fingerprint, face or device PIN'),'#16a34a'):''}</div>
+    <div class="sectlabel">Security</div><div class="slist">${isSuper?item("go('more','users')",'shield','User Management',DB.users.length+' users · recovery','#D0242F'):''}${item("changeOwnPw()",'lock','Change My Password','Update your password','#D0242F')}${(isNative()||waSupported())?item("bioToggle()",'lock','Biometric Unlock',(bioEnabled()?'On · tap to turn off':'Off · Face ID / fingerprint'),'#16a34a'):''}</div>
     <div class="sectlabel">Settings</div><div class="slist">${item("go('more','settings')",'gear','Settings','Backup, restore & email','#0891b2')}</div>
     <div class="banner">${ico('shield')}<div><b>Data stays on this device.</b> Auto sign-out after 2 hours. Back up regularly to move between devices.</div></div></div>`;
 }
