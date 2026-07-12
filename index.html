@@ -998,13 +998,23 @@ function editStaff(id){const s=id?DB.staff.find(x=>x.id===id):{fn:'',ln:'',email
 function saveStaff(id){const o={fn:$('tfn').value.trim(),ln:$('tln').value.trim(),email:$('tem').value.trim(),group:DB.groups[0]?.id};if(!o.fn)return;const nrm=s=>(s||'').trim().toLowerCase();
   if(o.email&&DB.staff.some(s=>s.id!==id&&nrm(s.email)===nrm(o.email))){toast('A staff member with this email already exists');return;}
   if(id)Object.assign(DB.staff.find(x=>x.id===id),o);else DB.staff.push({id:uid(),...o});save();closeSheet();render();toast('Saved');}
-function editEvent(id,preset){const today=new Date().toISOString().slice(0,10);const e=id?DB.events.find(x=>x.id===id):{name:'',date:(preset&&preset>=today)?preset:today,start:'09:00',end:'17:00'};const f=DB.meta.timeFmt||'12';
-  sheet(`<h3>${id?'Edit':'New'} event</h3><label class="f">Event name</label><input class="t" id="en" value="${esc(e.name)}" placeholder="e.g. Lord's Cricket Visit"><label class="f">Date</label><input class="t" type="date" id="ed" value="${e.date}" ${id?'':`min="${today}"`}>
+function editEvent(id,preset){const today=new Date().toISOString().slice(0,10);
+  const _d=new Date();const nowHM=String(_d.getHours()).padStart(2,'0')+':'+String(_d.getMinutes()).padStart(2,'0');
+  const nextSlot=TIMES.find(t=>t>=nowHM)||TIMES[TIMES.length-1];
+  const endTarget=String(Math.min(23,parseInt(nextSlot,10)+1)).padStart(2,'0')+':'+nextSlot.slice(3);
+  const endSlot=TIMES.find(t=>t>=endTarget)||nextSlot;
+  const e=id?DB.events.find(x=>x.id===id):{name:'',date:(preset&&preset>=today)?preset:today,start:nextSlot,end:endSlot};const f=DB.meta.timeFmt||'12';
+  const nowStr=fmtDate(today)+' · '+fmtTime(nowHM);
+  sheet(`<h3>${id?'Edit':'New'} event</h3>${id?'':`<div class="mini" style="margin:-4px 0 12px;display:flex;align-items:center;gap:6px;color:var(--muted)">${ico('clock')} Now: <b style="color:#1e2233">${nowStr}</b></div>`}<label class="f">Event name</label><input class="t" id="en" value="${esc(e.name)}" placeholder="e.g. Lord's Cricket Visit"><label class="f">Date</label><input class="t" type="date" id="ed" value="${e.date}" ${id?'':`min="${today}"`}>
     <div class="row" style="gap:8px;margin-top:12px"><span class="mini grow" style="font-weight:700">Time format</span><button id="tf12" class="btn sm ${f==='12'?'subtle':'ghost'}" style="width:auto" onclick="setTimeFmt('12')">12h</button><button id="tf24" class="btn sm ${f==='24'?'subtle':'ghost'}" style="width:auto" onclick="setTimeFmt('24')">24h</button></div>
     <div style="display:flex;gap:10px"><div style="flex:1"><label class="f">Start</label>${timeSel('es',e.start)}</div><div style="flex:1"><label class="f">End</label>${timeSel('ee',e.end)}</div></div>
     <button class="btn primary" style="margin-top:16px" onclick="saveEvent('${id||''}')">Save</button>${id?`<button class="btn ghost" style="margin-top:10px" onclick="assignEvent('${id}')">${ico('users')} Assign people</button>`:''}<button class="btn ghost" style="margin-top:10px" onclick="closeSheet()">Cancel</button>
     ${id?'':`<div style="margin-top:18px;border-top:1px solid var(--line);padding-top:14px"><div style="font-weight:700;font-size:13px;margin-bottom:2px">Add many at once</div><div class="mini" style="margin-bottom:10px">Import a CSV — columns: Event Name, Date (DD-MM-YYYY), Start Time, End Time. Times accept 12h or 24h.</div><div class="selrow" style="margin:0"><button class="btn subtle sm" style="flex:1" onclick="csvImport('events')">${ico('ul')} Import CSV</button><button class="btn ghost sm" style="flex:1" onclick="downloadSampleCSV('events')">${ico('dl')} Sample CSV</button></div></div>`}`);}
-function saveEvent(id){const name=$('en').value.trim(),date=$('ed').value,start=to24($('es').value),end=to24($('ee').value);if(!name||!date)return;const today=new Date().toISOString().slice(0,10);if(!id&&date<today){toast('⚠ Cannot create an event in a past date');return;}if(id){const e=DB.events.find(x=>x.id===id);Object.assign(e,{name,date,start,end});}else DB.events.push({id:uid(),name,date,start,end,batches:[],students:[],leaders:[],records:{},status:null});save();closeSheet();if(!id)go('more','events');else render();toast('Saved');}
+function saveEvent(id){const name=$('en').value.trim(),date=$('ed').value,start=to24($('es').value),end=to24($('ee').value);if(!name||!date)return;const today=new Date().toISOString().slice(0,10);const _d=new Date();const nowHM=String(_d.getHours()).padStart(2,'0')+':'+String(_d.getMinutes()).padStart(2,'0');
+  if(!id&&date<today){toast('⚠ Cannot create an event in a past date');return;}
+  if(start&&end&&end<=start){toast('⚠ End time must be after the start time');return;}
+  if(!id&&date===today&&end&&end<=nowHM){toast('⚠ This session has already ended today');return;}
+  if(id){const e=DB.events.find(x=>x.id===id);Object.assign(e,{name,date,start,end});}else DB.events.push({id:uid(),name,date,start,end,batches:[],students:[],leaders:[],records:{},status:null});save();closeSheet();if(!id)go('more','events');else render();toast('Saved');}
 
 /* ---- Assign people ---- */
 let assignTabState='batch', assignQ='';
