@@ -217,6 +217,26 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans
 .seg2 button.on{background:var(--a1);border-color:transparent;color:#fff}
 .seg2 .calbtn{margin-left:auto;width:40px;height:34px;display:flex;align-items:center;justify-content:center;padding:0}
 .seg2 .calbtn.on{background:var(--a1);color:#fff;border-color:transparent}
+.seg2 button .ic{width:15px;height:15px;vertical-align:-3px;margin-right:5px}
+.rpill{display:flex;align-items:center;justify-content:center;gap:18px;background:#fff;border:0.5px solid var(--line);border-radius:12px;padding:9px;margin-bottom:8px}
+.rpill button{background:none;border:none;color:var(--a1);cursor:pointer;display:flex;padding:4px}
+.rpill b{font-size:14px;font-weight:800;color:var(--txt)}
+.rpill .ic{width:18px;height:18px}
+.rbtn{flex:1;border:none;border-radius:11px;padding:11px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:800;cursor:pointer}
+.rbtn .ic{width:18px;height:18px}
+.rbtn.pdf{background:var(--acc-soft);color:var(--a1)}
+.rbtn.xls{background:#e5f6ed;color:#0f6e56}
+.rbtn.mail{background:var(--a1);color:#fff;flex:0 0 46px}
+.iconbtn{width:38px;height:34px;border:1px solid var(--line);background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.iconbtn .ic{width:18px;height:18px}
+.iconbtn.pdf{color:var(--a1)}.iconbtn.xls{color:#0f6e56}.iconbtn.mail{color:var(--muted)}
+.attrow{display:flex;gap:10px}
+.attcard{flex:1;position:relative;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;color:var(--muted);font-weight:800;font-size:13px}
+.attcard .ic{width:26px;height:26px}
+.attcard .attck{position:absolute;top:6px;right:6px;opacity:0;color:#fff;background:var(--a1);border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center}
+.attcard .attck .ic{width:12px;height:12px}
+.attcard.on{border-color:var(--a1);background:var(--acc-soft);color:var(--a1)}
+.attcard.on .attck{opacity:1}
 .calsticky{position:sticky;top:0;z-index:15;background:var(--bg);padding:6px 0 8px;margin-bottom:2px}
 .calsticky.stuck{box-shadow:0 8px 10px -8px rgba(20,25,45,.14)}
 .calsticky .seg2{margin-bottom:12px}
@@ -226,8 +246,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans
 .wkmy b{font-size:13px;font-weight:800;color:var(--a1);letter-spacing:.02em}
 .wkmy span{font-size:10px;color:var(--dim);font-weight:700}
 .weekstrip .wknav{background:var(--acc-soft);border:none;color:var(--a1);width:26px;height:52px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.wkdays{flex:1;display:flex;justify-content:space-between;gap:2px}
-.wkday{flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0;position:relative;color:var(--txt)}
+.wkdays{flex:1;display:flex;gap:0;overflow-x:auto;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.wkdays::-webkit-scrollbar{display:none}
+.wkday{flex:0 0 auto;width:44px;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0;position:relative;color:var(--txt)}
 .wkday .wd{font-size:10px;color:var(--muted);font-weight:700}
 .wkday .dn{font-size:15px;font-weight:700;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%}
 .wkday.today .wd,.wkday.today .dn{color:var(--a1)}
@@ -235,11 +256,9 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans
 .wkdot{position:absolute;bottom:0;width:5px;height:5px;border-radius:50%;background:var(--a1)}
 .wkday.sel .wkdot{background:var(--a1)}
 .agday{font-size:13px;color:var(--txt);font-weight:800;margin:16px 4px 8px}
-.wkdays{position:relative}
-.wkhi{position:absolute;border-radius:50%;background:var(--a1);z-index:0;opacity:0;pointer-events:none;transition:left .3s cubic-bezier(.4,0,.2,1),top .2s,width .2s,height .2s}
 .wkday{z-index:1}
-.wkday .dn{background:transparent!important;transition:color .25s}
-.wkday.act .dn{color:#fff}
+.wkday .dn{transition:background .2s,color .2s}
+.wkday.sel .dn,.wkday.act .dn{background:var(--a1);color:#fff}
 .wkday.act .wd{color:var(--a1)}
 .wkday.act .wkdot{background:#fff}
 .esum{font-size:12px;color:#6b7280;font-weight:600;margin:6px 2px 2px}.esum b{color:#1e2233}.esum .w{color:#b26a00;font-weight:800}
@@ -730,7 +749,10 @@ function saveNewPw(u){const a=$('np1').value,b=$('np2').value;if(!a||a!==b){toas
 function navMonth(dir){let m=cur.m+dir,y=cur.y;if(m<0){m=11;y--;}if(m>11){m=0;y++;}cur={y,m};selDay=null;render();}
 function attPct(e){const c=scount(e);return c.total?Math.round((c.present+c.late)/c.total*100):0;}
 function weekDaysOf(iso){const d=new Date(iso+'T00:00:00');const sun=new Date(d);sun.setDate(d.getDate()-d.getDay());const a=[];for(let i=0;i<7;i++){const x=new Date(sun);x.setDate(sun.getDate()+i);a.push(x.toISOString().slice(0,10));}return a;}
-function weekStripHTML(anchor){const today=new Date().toISOString().slice(0,10);const evD={};DB.events.filter(e=>!e.archived).forEach(e=>evD[e.date]=1);return weekDaysOf(anchor).map(ds=>{const d=new Date(ds+'T00:00:00');const cl=(ds===selDay?'sel ':'')+(ds===today?'today':'');return `<button class="wkday ${cl}" data-d="${ds}" onclick="pickDay('${ds}')"><span class="wd">${d.toLocaleDateString('en-GB',{weekday:'short'})}</span><span class="dn">${d.getDate()}</span>${evD[ds]?'<span class="wkdot"></span>':''}</button>`;}).join('');}
+function railDays(){const today=new Date();let mn=new Date(today),mx=new Date(today);DB.events.filter(e=>!e.archived).forEach(e=>{const d=new Date(e.date+'T00:00:00');if(d<mn)mn=d;if(d>mx)mx=d;});mn.setDate(mn.getDate()-14);mx.setDate(mx.getDate()+28);const a=[],cur=new Date(mn);while(cur<=mx&&a.length<520){a.push(cur.toISOString().slice(0,10));cur.setDate(cur.getDate()+1);}return a;}
+function weekStripHTML(){const today=new Date().toISOString().slice(0,10);const evD={};DB.events.filter(e=>!e.archived).forEach(e=>evD[e.date]=1);return railDays().map(ds=>{const d=new Date(ds+'T00:00:00');const cl=(ds===selDay?'sel ':'')+(ds===today?'today':'');return `<button class="wkday ${cl}" data-d="${ds}" onclick="pickDay('${ds}')"><span class="wd">${d.toLocaleDateString('en-GB',{weekday:'short'})}</span><span class="dn">${d.getDate()}</span>${evD[ds]?'<span class="wkdot"></span>':''}</button>`;}).join('');}
+function setWkMy(ds){const my=document.querySelector('.wkmy');if(!my||!ds)return;const dt=new Date(ds+'T00:00:00');my.querySelector('b').textContent=dt.toLocaleDateString('en-GB',{month:'short'}).toUpperCase();my.querySelector('span').textContent=dt.getFullYear();}
+function bindRailScroll(){const strip=document.querySelector('.wkdays');if(!strip||strip._rb)return;strip._rb=true;let raf=null;strip.addEventListener('scroll',()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=null;const sr=strip.getBoundingClientRect();let ds=null;const cells=strip.querySelectorAll('.wkday');for(const c of cells){if(c.getBoundingClientRect().right>sr.left+6){ds=c.getAttribute('data-d');break;}}if(ds)setWkMy(ds);});},{passive:true});}
 function shiftWeek(dir){const base=weekAnchor||new Date().toISOString().slice(0,10);const d=new Date(base+'T00:00:00');d.setDate(d.getDate()+dir*7);weekAnchor=d.toISOString().slice(0,10);selDay=null;render();}
 function resetCal(){const t=new Date();if(calMin){weekAnchor=t.toISOString().slice(0,10);}else{cur={y:t.getFullYear(),m:t.getMonth()};}selDay=null;_scrollDate=null;render();}
 function grpLabel(dt){const today=new Date().toISOString().slice(0,10);const t=new Date();t.setDate(t.getDate()+1);const tom=t.toISOString().slice(0,10);const sh=new Date(dt+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});if(dt===today)return 'Today · '+sh;if(dt===tom)return 'Tomorrow · '+sh;return sh;}
@@ -754,9 +776,7 @@ function agRow(e){const st=eventStatus(e);const setup=needsSetup(e);const done=s
     <div class="agsub">${fmtTime(e.start)} – ${fmtTime(e.end)}${e.batches.length?' · '+esc(e.batches.map(batchName).join(', ')):''} · <span style="color:${stCol(st.c)};font-weight:800">${chipTxt}</span></div>
     <div class="agexp" id="agx-${e.id}">${info}<div class="agmeta2">${studentsForEvent(e).length} students · ${leadersForEvent(e).length} leaders${isPast?' · read-only':''}</div><div class="agacts">${acts}</div></div>
   </div>`;}
-function syncWkHi(d){const my=document.querySelector('.wkmy');if(my){const dt=new Date((d||new Date().toISOString().slice(0,10))+'T00:00:00');my.querySelector('b').textContent=dt.toLocaleDateString('en-GB',{month:'short'}).toUpperCase();my.querySelector('span').textContent=dt.getFullYear();}
-  const strip=document.querySelector('.wkdays');if(!strip)return;const cell=strip.querySelector('.wkday[data-d="'+d+'"]');const hi=strip.querySelector('.wkhi');if(!cell||!hi)return;const dn=cell.querySelector('.dn');const sr=strip.getBoundingClientRect(),cr=dn.getBoundingClientRect();hi.style.left=(cr.left-sr.left)+'px';hi.style.top=(cr.top-sr.top)+'px';hi.style.width=cr.width+'px';hi.style.height=cr.height+'px';hi.style.opacity='1';strip.querySelectorAll('.wkday').forEach(w=>w.classList.toggle('act',w.getAttribute('data-d')===d));}
-function bindWeekSwipe(){const el=document.querySelector('.weekstrip');if(!el)return;let x0=null,y0=null;el.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});el.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.5)shiftWeek(dx<0?1:-1);},{passive:true});}
+function syncWkHi(d,smooth){const strip=document.querySelector('.wkdays');if(!strip)return;setWkMy(d);const cell=strip.querySelector('.wkday[data-d="'+d+'"]');strip.querySelectorAll('.wkday').forEach(w=>w.classList.toggle('act',w.getAttribute('data-d')===d));if(!cell)return;const target=Math.max(0,cell.offsetLeft-(strip.clientWidth-cell.clientWidth)/2);strip.scrollTo({left:target,behavior:(smooth===false?'auto':'smooth')});}
 function bindAgendaScroll(){const sc=document.getElementById('view');if(!sc||sc._agb)return;sc._agb=true;sc.addEventListener('scroll',()=>{
   const cal=sc.querySelector('.calsticky');if(cal)cal.classList.toggle('stuck',sc.scrollTop>4);
   if(route.tab!=='calendar'||route.id||selDay||!calMin)return;
@@ -764,9 +784,7 @@ function bindAgendaScroll(){const sc=document.getElementById('view');if(!sc||sc.
   const base=cal?cal.getBoundingClientRect().bottom:(sc.getBoundingClientRect().top+120);const thr=base+34;
   let d=null;secs.forEach(s=>{if(s.getBoundingClientRect().top<=thr)d=s.getAttribute('data-d');});
   if(!d)d=secs[0].getAttribute('data-d');
-  if(d&&d!==_scrollDate){_scrollDate=d;const wk=weekDaysOf(weekAnchor||new Date().toISOString().slice(0,10));
-    if(wk.indexOf(d)<0){weekAnchor=d;const wd=sc.querySelector('.wkdays');if(wd)wd.innerHTML=weekStripHTML(d)+'<span class="wkhi"></span>';requestAnimationFrame(()=>syncWkHi(d));}
-    else syncWkHi(d);}
+  if(d&&d!==_scrollDate){_scrollDate=d;syncWkHi(d);}
 },{passive:true});}
 function calendarView(v){
   const today=new Date().toISOString().slice(0,10);
@@ -807,11 +825,11 @@ function calendarView(v){
       <button class="calbtn" aria-label="Jump to ${calMin?'this week':'this month'}" onclick="resetCal()">${ico('today')}</button>
       <button class="calbtn ${calMin?'':'on'}" aria-label="Month view" onclick="calMin=!calMin;selDay=null;_scrollDate=null;render()">${ico('cal')}</button>
     </div>
-    ${calMin?`<div class="weekstrip"><div class="wkmy" aria-hidden="true"><b></b><span></span></div><div class="wkdays">${strip}<span class="wkhi"></span></div></div>`
+    ${calMin?`<div class="weekstrip"><div class="wkmy" aria-hidden="true"><b></b><span></span></div><div class="wkdays">${strip}</div></div>`
       :`<div class="card compactcal"><div class="calhead"><button onclick="navMonth(-1)">${ico('back')}</button><b style="cursor:pointer" onclick="openMonthPicker()">${monthName} ▾</b><button onclick="navMonth(1)">${ico('chev')}</button></div><div class="dow"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div><div class="grid">${cells}</div></div>`}</div>
     ${summary}${agenda}</div>`;
-  bindAgendaScroll();bindWeekSwipe();
-  requestAnimationFrame(()=>{if(calMin)syncWkHi(selDay||_scrollDate||today);});
+  bindAgendaScroll();bindRailScroll();
+  requestAnimationFrame(()=>{if(calMin)syncWkHi(selDay||_scrollDate||today,false);});
 }
 
 /* ================= EVENT DETAIL ================= */
@@ -946,32 +964,31 @@ function reportsView(v){
   const years=allYears();
   const evs=eventsInMonth(repY,repM);let p=0,a=0,l=0;evs.forEach(e=>{const c=scount(e);p+=c.present;a+=c.absent;l+=c.late;});
   const total=p+a+l||1,pp=Math.round(p/total*100);
-  const seg=`<div class="seg2"><button class="${repMode==='event'?'on':''}" onclick="repMode='event';render()">By event</button><button class="${repMode==='batch'?'on':''}" onclick="repMode='batch';render()">By batch</button><button class="${repMode==='student'?'on':''}" onclick="repMode='student';render()">By student</button></div>`;
+  const seg=`<div class="seg2"><button class="${repMode==='event'?'on':''}" onclick="repMode='event';render()">${ico('cal')}Events</button><button class="${repMode==='batch'?'on':''}" onclick="repMode='batch';render()">${ico('cap')}Batches</button><button class="${repMode==='student'?'on':''}" onclick="repMode='student';render()">${ico('users')}Students</button></div>`;
   const mlabel=MONTHS[repM]+' '+repY;
   let body='';
   if(repMode==='event'){
     body=`<div class="card"><div class="dash-head"><span class="reddot"></span>Export ${mlabel}</div>
-        <div class="selrow" style="margin:0 0 10px"><button class="btn primary" onclick="exportMonthPDF()">${ico('doc')} PDF</button><button class="btn ghost" onclick="exportMonthCSV()">${ico('sheetx')} Excel</button></div>
-        <button class="btn subtle" onclick="emailMonthReport()">${ico('mail')} Email to recipients</button></div>
+        <div class="attrow"><button class="rbtn pdf" onclick="exportMonthPDF()">${ico('doc')} PDF</button><button class="rbtn xls" onclick="exportMonthCSV()">${ico('sheetx')} Excel</button><button class="rbtn mail" aria-label="Email report" onclick="emailMonthReport()">${ico('mail')}</button></div></div>
       <div class="sectlabel">Events in ${mlabel}</div>
       ${evs.length?evs.map(e=>{const c=scount(e);const r=c.total?Math.round((c.present+c.late)/c.total*100):0;return `<div class="card"><div class="row tap" onclick="go('calendar',null,'${e.id}')"><div class="datebadge" style="width:44px"><div class="wd">${wday(e.date)}</div><div class="d" style="font-size:18px">${dayNum(e.date)}</div><div class="m">${monY(e.date)}</div></div><div class="grow"><div class="title" style="font-size:14.5px">${esc(e.name)}</div><div class="mini">${c.present}P · ${c.absent}A · ${c.late}L · ${r}%</div></div></div>
-        <div class="selrow" style="margin:12px 0 0"><button class="btn subtle sm" style="flex:1" onclick="exportEventPDF('${e.id}')">${ico('doc')} PDF</button><button class="btn ghost sm" style="flex:1" onclick="exportEventCSV('${e.id}')">${ico('sheetx')} Excel</button><button class="btn subtle sm" style="flex:1" onclick="emailEventReport('${e.id}')">${ico('mail')} Email</button></div></div>`;}).join(''):'<div class="empty">'+ico('doc')+'<div>No events in this month.</div></div>'}`;
+        <div class="selrow" style="margin:12px 0 0;justify-content:flex-end;gap:8px"><button class="iconbtn pdf" aria-label="PDF" onclick="exportEventPDF('${e.id}')">${ico('doc')}</button><button class="iconbtn xls" aria-label="Excel" onclick="exportEventCSV('${e.id}')">${ico('sheetx')}</button><button class="iconbtn mail" aria-label="Email" onclick="emailEventReport('${e.id}')">${ico('mail')}</button></div></div>`;}).join(''):'<div class="empty">'+ico('doc')+'<div>No events in this month.</div></div>'}`;
   } else if(repMode==='batch'){
     const rows=monthBatchRows(evs);
-    body=`<div class="card"><div class="dash-head"><span class="reddot"></span>Export ${mlabel}</div><button class="btn ghost" onclick="exportBatchCSV()">${ico('sheetx')} Batch summary (Excel)</button></div>
+    body=`<div class="card"><div class="dash-head"><span class="reddot"></span>Export ${mlabel}</div><button class="rbtn xls" onclick="exportBatchCSV()">${ico('sheetx')} Batch summary (Excel)</button></div>
       <div class="sectlabel">Attendance by batch · ${mlabel}</div>
       ${rows.length?rows.map(x=>`<div class="card"><div class="row"><div class="grow"><div class="title" style="font-size:14.5px">${esc(x.b.name)}</div><div class="mini">${x.students} students · ${x.events} event${x.events>1?'s':''} · ${x.slots} slots</div></div><div style="font-weight:800;font-size:18px;color:${pctColor(x.pct)}">${x.pct}%</div></div>
         <div class="minigrid"><div><b style="color:var(--present)">${x.p}</b><span>Present</span></div><div><b style="color:var(--late)">${x.l}</b><span>Late</span></div><div><b style="color:var(--absent)">${x.a}</b><span>Absent</span></div></div>
         <div class="pbar"><i style="width:${x.pct}%;background:${pctColor(x.pct)}"></i></div></div>`).join(''):'<div class="empty">'+ico('cap')+'<div>No completed events this month.</div></div>'}`;
   } else {
-    body=`<div class="card"><div class="dash-head"><span class="reddot"></span>Export ${mlabel}</div><div class="selrow" style="margin:0"><button class="btn ghost" style="flex:1" onclick="exportStudentCSV()">${ico('sheetx')} Excel</button><button class="btn primary" style="flex:1" onclick="exportStudentPDF()">${ico('doc')} PDF</button></div></div>
+    body=`<div class="card"><div class="dash-head"><span class="reddot"></span>Export ${mlabel}</div><div class="attrow"><button class="rbtn pdf" onclick="exportStudentPDF()">${ico('doc')} PDF</button><button class="rbtn xls" onclick="exportStudentCSV()">${ico('sheetx')} Excel</button></div></div>
       <div class="sectlabel">Students by attendance <span class="mini" style="font-weight:600">lowest first</span></div>
       <div class="searchbox">${ico('search')}<input class="search" value="${esc(repStuQ)}" placeholder="Search student..." oninput="repStuQ=this.value;repStuRefresh()"></div>
       <div id="repStuBody"></div>`;
   }
   v.innerHTML=`<div class="wrap">
     ${seg}
-    <div class="selrow"><select onchange="repM=+this.value;render()">${MONTHS.map((m,i)=>`<option value="${i}" ${i===repM?'selected':''}>${m}</option>`).join('')}</select><select onchange="repY=+this.value;render()">${years.map(y=>`<option ${y===repY?'selected':''}>${y}</option>`).join('')}</select></div>
+    <div class="rpill"><button aria-label="Previous month" onclick="repShift(-1)">${ico('back')}</button><b>${mlabel}</b><button aria-label="Next month" onclick="repShift(1)">${ico('chev')}</button></div>
     <div class="bento three" style="margin-bottom:6px"><div class="stat"><div class="n" style="color:var(--a1)">${evs.length}</div><div class="l">Events</div></div><div class="stat"><div class="n" style="color:var(--present)">${pp}%</div><div class="l">Attendance</div></div><div class="stat"><div class="n" style="color:var(--absent)">${a}</div><div class="l">Absences</div></div></div>
     ${body}</div>`;
   if(repMode==='student')repStuRefresh();
@@ -1459,6 +1476,54 @@ async function emailReport(subject,filename,blob,mime){
   location.href='mailto:'+encodeURIComponent(to.join(','))+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent('Attendance file attached: '+filename);
   snack('No relay set — file downloaded & email draft opened',null,4000);
 }
+async function emailReportMulti(subject,files){
+  files=(files||[]).filter(Boolean);if(!files.length){toast('Pick at least one attachment');return;}
+  const to=(DB.recipients||[]).slice();if(!to.length){toast('No recipients set — add them in More → Email');return;}
+  const s=DB.smtp||{};
+  if(s.relay){
+    snack('Sending email…',null,4000);
+    try{
+      const atts=[];for(const f of files){atts.push({filename:f.filename,mime:f.mime,base64:await blobToB64(f.blob)});}
+      const res=await fetch(s.relay,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({host:s.host,port:s.port,secure:s.secure,user:s.user,pass:s.pass,fromName:s.fromName,from:s.fromEmail,to,subject,attachments:atts,filename:atts[0].filename,mime:atts[0].mime,attachmentBase64:atts[0].base64})});
+      if(res.ok){snack('✓ Email sent to '+to.length+' recipient'+(to.length>1?'s':''),null,3000);}
+      else{let m='';try{m=(await res.text()).slice(0,120);}catch(e){}snack('✗ Send failed ('+res.status+') '+m,null,4500);}
+    }catch(err){snack('✗ Send failed: '+(err&&err.message||'network error'),null,4500);}
+    return;
+  }
+  if(isNative()){for(const f of files){await saveFile(f.filename,f.blob,f.mime);}snack('File'+(files.length>1?'s':'')+' ready — pick your email app to attach & send',null,3500);return;}
+  try{const fl=files.map(f=>new File([f.blob],f.filename,{type:f.mime}));if(navigator.canShare&&navigator.canShare({files:fl})){await navigator.share({files:fl,title:subject,text:'To: '+to.join(', ')});snack('Opened share — choose your email app',null,3000);return;}}catch(e){}
+  try{for(const f of files)dl(f.filename,f.blob,f.mime);}catch(e){}
+  location.href='mailto:'+encodeURIComponent(to.join(','))+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent('Attendance files attached: '+files.map(f=>f.filename).join(', '));
+  snack('No relay set — files downloaded & email draft opened',null,4000);
+}
+function emailAtt(kind,id){
+  if(kind==='event'){const e=DB.events.find(x=>x.id===id);const base='Attendance_'+e.name.replace(/[^a-z0-9]+/gi,'_')+'_'+e.date;return {subject:'Attendance — '+e.name+' ('+toDMY(e.date)+')',base,pdf:()=>buildEventDoc(e).output('blob'),xls:()=>csvBlob([CSV_HEAD,...eventRows(e)])};}
+  const evs=eventsInMonth(repY,repM);let rows=[CSV_HEAD];evs.forEach(e=>{rows=rows.concat(eventRows(e));});const base='Attendance_'+MONTHS[repM]+'_'+repY;return {subject:'Attendance — '+MONTHS[repM]+' '+repY,base,evs,pdf:()=>buildMonthDoc(evs).output('blob'),xls:()=>csvBlob(rows)};
+}
+function emailChooser(kind,id){
+  const a=emailAtt(kind,id);
+  if(kind==='month'&&(!a.evs||!a.evs.length)){toast('No events this month');return;}
+  if(!(DB.recipients||[]).length){toast('No recipients set — add them in More → Email');return;}
+  window._emailSel={pdf:true,xls:true,kind,id};
+  sheet(`<h3>Email report</h3>
+    <div class="muted" style="margin:-4px 0 14px;font-size:13px">${ico('users')} To ${(DB.recipients||[]).length} recipient${(DB.recipients||[]).length>1?'s':''}</div>
+    <div class="sectlabel" style="margin:0 0 8px">Attach</div>
+    <div class="attrow">
+      <button class="attcard on" id="attPdf" onclick="toggleAtt('pdf')"><span class="attck">${ico('check')}</span>${ico('doc')}<span>PDF</span></button>
+      <button class="attcard on" id="attXls" onclick="toggleAtt('xls')"><span class="attck">${ico('check')}</span>${ico('sheetx')}<span>Excel</span></button>
+    </div>
+    <button class="btn primary" style="margin-top:16px" onclick="sendEmailChoice()">${ico('share')} Send</button>
+    <div class="mini" style="text-align:center;margin-top:10px">Both attached by default — tap a card to include or drop it.</div>`);
+}
+function toggleAtt(k){const s=window._emailSel;if(!s)return;s[k]=!s[k];const el=$(k==='pdf'?'attPdf':'attXls');if(el)el.classList.toggle('on',s[k]);}
+function sendEmailChoice(){const s=window._emailSel;if(!s)return;if(!s.pdf&&!s.xls){toast('Pick at least one attachment');return;}
+  if(s.pdf&&!pdfReady())return;
+  const a=emailAtt(s.kind,s.id);const files=[];
+  if(s.pdf)files.push({filename:a.base+'.pdf',mime:'application/pdf',blob:a.pdf()});
+  if(s.xls)files.push({filename:a.base+'.csv',mime:'text/csv',blob:a.xls()});
+  closeSheet();emailReportMulti(a.subject,files);
+}
+function repShift(d){repM+=d;if(repM<0){repM=11;repY--;}else if(repM>11){repM=0;repY++;}render();}
 function csvBlob(rows){return new Blob([rows.map(r=>r.map(csvEsc).join(',')).join('\n')],{type:'text/csv'});}
 
 /* ================= PDF / EXCEL ================= */
@@ -1484,9 +1549,9 @@ function eventPdfBlock(doc,e,y){const c=scount(e);const lbl=r=>({present:'Presen
 function buildEventDoc(e){const {jsPDF}=window.jspdf;const doc=new jsPDF();doc.setFontSize(18);doc.setTextColor(208,36,47);doc.text('SPJ London — Attendance',14,18);eventPdfBlock(doc,e,30);doc.setTextColor(150);doc.setFontSize(8);doc.text('Generated by SPJ Attendance — on-device',14,292);return doc;}
 function buildMonthDoc(evs){const {jsPDF}=window.jspdf;const doc=new jsPDF();doc.setFontSize(18);doc.setTextColor(208,36,47);doc.text('SPJ London — '+MONTHS[repM]+' '+repY,14,18);let P=0,A=0,L=0;evs.forEach(e=>{const c=scount(e);P+=c.present;A+=c.absent;L+=c.late;});doc.setFontSize(10);doc.setTextColor(30,34,51);doc.text('Events: '+evs.length+'   Students — Present: '+P+'   Late: '+L+'   Absent: '+A,14,27);let y=36;evs.forEach(e=>{y=eventPdfBlock(doc,e,y);});doc.setTextColor(150);doc.setFontSize(8);doc.text('SPJ Attendance — on-device',14,292);return doc;}
 function exportEventPDF(eid){if(!pdfReady())return;const e=DB.events.find(x=>x.id===eid);shareOrDownload(buildEventDoc(e),`Attendance_${e.name.replace(/[^a-z0-9]+/gi,'_')}_${e.date}.pdf`,'Attendance',e.name);}
-function emailEventReport(eid){const e=DB.events.find(x=>x.id===eid);emailReport('Attendance — '+e.name+' ('+toDMY(e.date)+')',`Attendance_${e.name.replace(/[^a-z0-9]+/gi,'_')}_${e.date}.csv`,csvBlob([CSV_HEAD,...eventRows(e)]),'text/csv');}
+function emailEventReport(eid){emailChooser('event',eid);}
 function exportMonthPDF(){if(!pdfReady())return;const evs=eventsInMonth(repY,repM);if(!evs.length){toast('No events this month');return;}shareOrDownload(buildMonthDoc(evs),'Attendance_'+MONTHS[repM]+'_'+repY+'.pdf','Attendance '+MONTHS[repM]+' '+repY,'Monthly attendance');}
-function emailMonthReport(){const evs=eventsInMonth(repY,repM);if(!evs.length){toast('No events this month');return;}let rows=[CSV_HEAD];evs.forEach(e=>{rows=rows.concat(eventRows(e));});emailReport('Attendance — '+MONTHS[repM]+' '+repY,'Attendance_'+MONTHS[repM]+'_'+repY+'.csv',csvBlob(rows),'text/csv');}
+function emailMonthReport(){emailChooser('month');}
 
 /* ================= VISIBILITY / BOOT ================= */
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&SESSION&&Date.now()>SESSION.exp){endSession();render();toast('Session timed out — please sign in');}});
