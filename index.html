@@ -245,6 +245,19 @@ body{margin:0;padding:0;position:fixed;inset:0;overflow:hidden;overscroll-behavi
 .attcard .attck .ic{width:12px;height:12px}
 .attcard.on{border-color:var(--a1);background:var(--acc-soft);color:var(--a1)}
 .attcard.on .attck{opacity:1}
+.strow{display:flex;align-items:center;gap:10px;background:#fff;border:0.5px solid var(--line);border-radius:12px;padding:10px 8px 10px 12px;margin-bottom:8px;cursor:pointer}
+.strow .stn{font-weight:800;font-size:14px;color:var(--txt)}
+.strow .stm{font-size:11px;color:var(--muted);margin-top:1px}
+.strow .stpct{font-weight:800;font-size:15px;line-height:1;text-align:right}
+.strow .stpla{font-size:10.5px;font-weight:700;margin-top:2px;white-space:nowrap}
+.strow .stdots{background:none;border:none;color:var(--dim);cursor:pointer;padding:2px;display:flex}
+.strow .stdots .ic{width:18px;height:18px}
+.sdlist{max-height:44vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sdrow{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line)}
+.sdrow:last-child{border-bottom:none}
+.sdrow .sdn{font-weight:700;font-size:13.5px}
+.sdrow .sdst{font-weight:800;font-size:12px;white-space:nowrap}
+.sdrow .sdst .ic{width:14px;height:14px;vertical-align:-2px}
 .calsticky{position:sticky;top:0;z-index:15;background:var(--bg);padding:6px 0 8px;margin-bottom:2px}
 .calsticky.stuck{box-shadow:0 8px 10px -8px rgba(20,25,45,.14)}
 .calsticky .seg2{margin-bottom:12px}
@@ -661,6 +674,9 @@ function dpPickYear(y){if(_dp.kind==='year'){dashScope.year=y;closeSheet();rende
 let _pk={year:2026,bundle:2020,mode:'month'};
 function openMonthPicker(){_pk={year:cur.y,bundle:cur.y-(cur.y%12),mode:'month'};sheet(`<h3>Jump to month</h3><div id="pkBody" style="margin-top:12px"></div><button class="btn ghost" style="margin-top:14px" onclick="closeSheet()">Cancel</button>`);pickerBody();}
 function pickerBody(){const b=$('pkBody');if(!b)return;if(_pk.mode==='month'){b.innerHTML=`<div class="calhead"><button onclick="_pk.year--;pickerBody()">${ico('back')}</button><b style="cursor:pointer" onclick="_pk.mode='year';_pk.bundle=_pk.year-(_pk.year%12);pickerBody()">${_pk.year} ▾</b><button onclick="_pk.year++;pickerBody()">${ico('chev')}</button></div><div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px">${MONTHS.map((m,i)=>`<button class="ftab" style="min-width:0;width:100%;padding:14px 0;${i===cur.m&&_pk.year===cur.y?'background:var(--a1);color:#fff;border-color:transparent':''}" onclick="cur={y:${_pk.year},m:${i}};selDay=null;closeSheet();render()">${m.slice(0,3)}</button>`).join('')}</div>`;}else{const s=_pk.bundle;b.innerHTML=`<div class="calhead"><button onclick="_pk.bundle-=12;pickerBody()">${ico('back')}</button><b>${s} – ${s+11}</b><button onclick="_pk.bundle+=12;pickerBody()">${ico('chev')}</button></div><div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px">${Array.from({length:12},(_,k)=>s+k).map(y=>`<button class="ftab" style="min-width:0;width:100%;padding:14px 0;${y===_pk.year?'background:var(--a1);color:#fff;border-color:transparent':''}" onclick="_pk.year=${y};_pk.mode='month';pickerBody()">${y}</button>`).join('')}</div>`;}}
+let _rpk={year:2026,bundle:2020,mode:'month'};
+function openRepPicker(){_rpk={year:repY,bundle:repY-(repY%12),mode:'month'};sheet(`<h3>Jump to month</h3><div id="rpkBody" style="margin-top:12px"></div><button class="btn ghost" style="margin-top:14px" onclick="closeSheet()">Cancel</button>`);repPickerBody();}
+function repPickerBody(){const b=$('rpkBody');if(!b)return;if(_rpk.mode==='month'){b.innerHTML=`<div class="calhead"><button onclick="_rpk.year--;repPickerBody()">${ico('back')}</button><b style="cursor:pointer" onclick="_rpk.mode='year';_rpk.bundle=_rpk.year-(_rpk.year%12);repPickerBody()">${_rpk.year} ▾</b><button onclick="_rpk.year++;repPickerBody()">${ico('chev')}</button></div><div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px">${MONTHS.map((m,i)=>`<button class="ftab" style="min-width:0;width:100%;padding:14px 0;${i===repM&&_rpk.year===repY?'background:var(--a1);color:#fff;border-color:transparent':''}" onclick="repM=${i};repY=${_rpk.year};closeSheet();render()">${m.slice(0,3)}</button>`).join('')}</div>`;}else{const s=_rpk.bundle;b.innerHTML=`<div class="calhead"><button onclick="_rpk.bundle-=12;repPickerBody()">${ico('back')}</button><b>${s} – ${s+11}</b><button onclick="_rpk.bundle+=12;repPickerBody()">${ico('chev')}</button></div><div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px">${Array.from({length:12},(_,k)=>s+k).map(y=>`<button class="ftab" style="min-width:0;width:100%;padding:14px 0;${y===_rpk.year?'background:var(--a1);color:#fff;border-color:transparent':''}" onclick="_rpk.year=${y};_rpk.mode='month';repPickerBody()">${y}</button>`).join('')}</div>`;}}
 function render(){
   if(SESSION&&Date.now()>SESSION.exp){endSession();}
   if(!SESSION){$('nav').style.display='none';$('header').innerHTML='';$('fab').style.display='none';$('view').style.paddingBottom='0';loginView($('view'));return;}
@@ -970,12 +986,19 @@ function dashboardView(v){
 /* ================= REPORTS ================= */
 function eventsInMonth(y,m){return DB.events.filter(e=>{if(e.archived)return false;const d=new Date(e.date+'T00:00:00');return d.getFullYear()===y&&d.getMonth()===m;}).sort((a,b)=>a.date.localeCompare(b.date));}
 function allYears(){const cy=new Date().getFullYear();let lo=cy-2,hi=cy+1;DB.events.forEach(e=>{const y=+e.date.slice(0,4);if(y<lo)lo=y;if(y>hi)hi=y;});const out=[];for(let y=lo;y<=hi;y++)out.push(y);return out;}
-function monthBatchRows(evs){const done=evs.filter(isCompleted);return DB.batches.map(b=>{const bevs=done.filter(e=>e.batches.includes(b.id));const studs=DB.students.filter(s=>s.batch===b.id);let p=0,l=0,a=0;bevs.forEach(e=>studs.forEach(s=>{const r=e.records[s.id];if(r==='present')p++;else if(r==='late')l++;else a++;}));const slots=bevs.length*studs.length;const pct=slots?Math.round((p+l)/slots*100):null;return {b,events:bevs.length,students:studs.length,slots,p,l,a,pct};}).filter(x=>x.events>0);}
+function monthBatchRows(evs){const done=evs.filter(isCompleted);return DB.batches.map(b=>{const bevs=done.filter(e=>e.batches.includes(b.id));const studs=DB.students.filter(s=>s.batch===b.id);let p=0,l=0,a=0,slots=0;bevs.forEach(e=>{const roster=new Set(studentsForEvent(e).map(x=>x.id));studs.forEach(s=>{if(!roster.has(s.id))return;slots++;const r=e.records[s.id];if(r==='present')p++;else if(r==='late')l++;else a++;});});const pct=slots?Math.round((p+l)/slots*100):null;return {b,events:bevs.length,students:studs.length,slots,p,l,a,pct};}).filter(x=>x.events>0);}
 function monthStudentRows(evs){const done=evs.filter(isCompleted);return DB.students.map(s=>{const sevs=done.filter(e=>studentsForEvent(e).some(x=>x.id===s.id));let p=0,l=0,a=0;sevs.forEach(e=>{const r=e.records[s.id];if(r==='present')p++;else if(r==='late')l++;else a++;});const sched=sevs.length;const pct=sched?Math.round((p+l)/sched*100):null;return {s,sched,p,l,a,pct};}).filter(x=>x.sched>0).sort((a,b)=>(a.pct==null?999:a.pct)-(b.pct==null?999:b.pct));}
 function pctColor(p){return p==null?'var(--dim)':p>=85?'var(--present)':p>=70?'var(--orange)':'var(--absent)';}
 function repStuRefresh(){const el=$('repStuBody');if(!el)return;const evs=eventsInMonth(repY,repM);const rows=monthStudentRows(evs).filter(x=>!repStuQ||(x.s.fn+' '+x.s.ln+' '+(x.s.cid||'')).toLowerCase().includes(repStuQ.toLowerCase()));
-  el.innerHTML=rows.length?rows.map(x=>`<div class="card" style="padding:12px 14px"><div class="row"><div class="avatar ${avColor(x.s.fn)}">${initials(x.s.fn,x.s.ln)}</div><div class="grow"><div style="font-weight:700">${esc(x.s.fn)} ${esc(x.s.ln)}</div><div class="mini">${esc(x.s.cid||'—')} · ${esc(batchName(x.s.batch))} · ${x.sched} event${x.sched>1?'s':''}</div></div><div style="font-weight:800;font-size:18px;color:${pctColor(x.pct)}">${x.pct}%</div></div>
-    <div class="minigrid"><div><b style="color:var(--present)">${x.p}</b><span>Present</span></div><div><b style="color:var(--late)">${x.l}</b><span>Late</span></div><div><b style="color:var(--absent)">${x.a}</b><span>Absent</span></div></div></div>`).join(''):'<div class="empty">'+ico('users')+'<div>No completed events this month.</div></div>';}
+  el.innerHTML=rows.length?rows.map(x=>`<div class="strow" onclick="openStudentReport('${x.s.id}')"><div class="grow"><div class="stn">${esc(x.s.fn)} ${esc(x.s.ln)}</div><div class="stm">${esc(x.s.cid||'—')} · ${esc(batchName(x.s.batch))}</div></div><div><div class="stpct" style="color:${pctColor(x.pct)}">${x.pct==null?'—':x.pct+'%'}</div><div class="stpla"><span style="color:var(--present)">P:${x.p}</span> <span style="color:var(--late)">L:${x.l}</span> <span style="color:var(--absent)">A:${x.a}</span></div></div><span class="stdots">${ico('more')}</span></div>`).join(''):'<div class="empty">'+ico('users')+'<div>No completed events this month.</div></div>';}
+function openStudentReport(sid){const s=DB.students.find(x=>x.id===sid);if(!s)return;const evs=eventsInMonth(repY,repM);const assigned=evs.filter(e=>studentsForEvent(e).some(x=>x.id===sid)).sort((a,b)=>a.date.localeCompare(b.date));
+  let p=0,l=0,a=0,done=0;const rows=assigned.map(e=>{const comp=isCompleted(e);const r=e.records[sid];let st,col,ic;if(!comp){st='Upcoming';col='var(--dim)';ic='clock';}else{done++;if(r==='present'){st='Present';col='var(--present)';ic='check';p++;}else if(r==='late'){st='Late';col='var(--late)';ic='clock';l++;}else{st='Absent';col='var(--absent)';ic='x';a++;}}return {e,st,col,ic};});
+  const pct=done?Math.round((p+l)/done*100):null;
+  sheet(`<div class="row" style="gap:10px;margin-bottom:2px;align-items:center"><div class="avatar ${avColor(s.fn)}">${initials(s.fn,s.ln)}</div><div class="grow"><h3 style="margin:0">${esc(s.fn)} ${esc(s.ln)}</h3><div class="mini">${esc(s.cid||'—')} · ${esc(batchName(s.batch))}</div></div><div class="stpct" style="font-size:24px;color:${pctColor(pct)}">${pct==null?'—':pct+'%'}</div></div>
+    <div class="mini" style="margin:2px 0 12px">${MONTHS[repM]} ${repY} · attended <b>${p+l}</b> of <b>${done}</b> completed · ${assigned.length} assigned</div>
+    <div class="minigrid" style="margin-bottom:12px"><div><b style="color:var(--present)">${p}</b><span>Present</span></div><div><b style="color:var(--late)">${l}</b><span>Late</span></div><div><b style="color:var(--absent)">${a}</b><span>Absent</span></div></div>
+    <div class="sectlabel" style="margin:0 0 4px">Events</div>
+    <div class="sdlist">${assigned.length?rows.map(r=>`<div class="sdrow"><div class="grow"><div class="sdn">${esc(r.e.name)}</div><div class="mini">${ico('cal')} ${toDMY(r.e.date)} · ${fmtTime(r.e.start)}</div></div><span class="sdst" style="color:${r.col}">${ico(r.ic)} ${r.st}</span></div>`).join(''):'<div class="mini" style="padding:8px 0">No assigned events in '+MONTHS[repM]+' '+repY+'.</div>'}</div>`);}
 function reportsView(v){
   const years=allYears();
   const evs=eventsInMonth(repY,repM);let p=0,a=0,l=0;evs.forEach(e=>{const c=scount(e);p+=c.present;a+=c.absent;l+=c.late;});
@@ -1004,7 +1027,7 @@ function reportsView(v){
   }
   v.innerHTML=`<div class="wrap">
     ${seg}
-    <div class="selrow"><select class="t" onchange="repM=+this.value;render()">${MONTHS.map((m,i)=>`<option value="${i}" ${i===repM?'selected':''}>${m}</option>`).join('')}</select><select class="t" onchange="repY=+this.value;render()">${years.map(y=>`<option ${y===repY?'selected':''}>${y}</option>`).join('')}</select></div>
+    <div class="selrow" style="justify-content:center"><button class="btn ghost sm" style="width:auto" onclick="openRepPicker()">${ico('cal')} ${MONTHS[repM]} ${repY} ▾</button></div>
     <div class="bento three" style="margin-bottom:6px"><div class="stat"><div class="n" style="color:var(--a1)">${evs.length}</div><div class="l">Events</div></div><div class="stat"><div class="n" style="color:var(--present)">${pp}%</div><div class="l">Attendance</div></div><div class="stat"><div class="n" style="color:var(--absent)">${a}</div><div class="l">Absences</div></div></div>
     ${body}</div>`;
   if(repMode==='student')repStuRefresh();
