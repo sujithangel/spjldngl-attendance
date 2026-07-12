@@ -30,36 +30,9 @@
   --orange:#d97706; --blue:#2563eb;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--bg);
-}
-body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, sans-serif;
-  color: var(--txt);
-  background: var(--bg);
-  overflow: hidden;
-  overscroll-behavior: none;
-  -webkit-font-smoothing: antialiased;
-}
-#app {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-}
+html{margin:0;padding:0;width:100%;height:100%;background:var(--a1);}
+body{margin:0;padding:0;position:fixed;inset:0;overflow:hidden;overscroll-behavior:none;background:var(--a1);font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--txt);-webkit-font-smoothing:antialiased;}
+#app{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--bg);}
 #header{flex:0 0 auto;}
 #view{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding-bottom:calc(90px + env(safe-area-inset-bottom));}
 #ptr{position:fixed;top:calc(env(safe-area-inset-top) + 6px);left:50%;transform:translateX(-50%) translateY(-46px);width:36px;height:36px;border-radius:50%;background:#fff;box-shadow:0 3px 12px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;opacity:0;z-index:60;transition:opacity .18s;}
@@ -81,6 +54,13 @@ body {
 .dcap{font-size:11px;opacity:.92;font-weight:600;text-align:right;line-height:1.5}
 .dpills{display:flex;gap:8px;padding:0 16px;margin-top:-16px}
 .dpill{flex:1;background:#fff;border-radius:13px;padding:10px 4px;text-align:center;box-shadow:0 4px 14px rgba(20,25,45,.1)}
+.dquick{display:flex;gap:8px;padding:0 16px;margin-top:-16px;position:sticky;top:0;z-index:15;background:transparent;transition:background .15s}
+.dquick.stuck{background:var(--bg);box-shadow:0 8px 10px -8px rgba(20,25,45,.14);padding-top:8px;padding-bottom:8px;margin-top:0}
+.dqb{flex:1;background:#fff;border:0.5px solid var(--line);border-radius:14px;padding:9px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:var(--txt);box-shadow:0 4px 14px rgba(20,25,45,.1)}
+.dqb .dqi{display:flex}
+.dqb .dqi .ic{width:20px;height:20px}
+.dqb b{font-size:15px;font-weight:800;line-height:1}
+.dqb em{font-size:9px;color:var(--muted);font-weight:700;font-style:normal;letter-spacing:.02em}
 .dpill b{display:block;font-size:16px;font-weight:900;color:#B01E27}
 .dpill span{font-size:7.5px;color:var(--muted);font-weight:800}
 .dbody{padding:0 16px 8px}
@@ -248,6 +228,7 @@ body {
 .rpill{display:flex;align-items:center;justify-content:center;gap:18px;background:#fff;border:0.5px solid var(--line);border-radius:12px;padding:9px;margin-bottom:8px}
 .rpill button{background:none;border:none;color:var(--a1);cursor:pointer;display:flex;padding:4px}
 .rpill b{font-size:14px;font-weight:800;color:var(--txt)}
+.rpill .rpsel{border:none;background:none;font-size:14px;font-weight:800;color:var(--txt);padding:2px 4px;-webkit-appearance:none;appearance:none;text-align:center;cursor:pointer}
 .rpill .ic{width:18px;height:18px}
 .rbtn{flex:1;border:none;border-radius:11px;padding:11px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:800;cursor:pointer}
 .rbtn .ic{width:18px;height:18px}
@@ -573,7 +554,7 @@ function save(bump){if(bump!==false){DB.meta=DB.meta||{rev:0,backupRev:0};DB.met
 function normalize(){DB.events.forEach(e=>{e.start=to24(e.start);e.end=to24(e.end);});DB.meta.timeFmt=DB.meta.timeFmt||'12';}
 function prefillDemo(){const e=DB.events.find(x=>x.date==='2026-07-05');if(e&&Object.keys(e.records).length===0){const p=peopleForEvent(e);p.slice(0,4).forEach((x,i)=>e.records[x.id]=['present','present','late','present'][i]);e.status='completed';}}
 async function maybeSnapshot(force){DB.meta=DB.meta||{};const last=DB.meta.lastSnap||0;if(!force&&Date.now()-last<6*3600*1000)return;DB.meta.lastSnap=Date.now();const json=JSON.stringify(DB);try{await idbPut('snaps',{ts:Date.now(),at:new Date().toISOString(),size:json.length,data:json});const all=await idbAll('snaps');all.sort((a,b)=>b.ts-a.ts);for(const s of all.slice(15))await idbDel('snaps',s.ts);}catch(e){}persist();}
-async function init(){await openDB();let raw=await idbGet('kv','db');if(!raw){const ls=localStorage.getItem(KEY);if(ls){try{raw=JSON.parse(ls);}catch(e){}}}DB=raw||seed();migrate();normalize();prefillDemo();autoFinalizeDrafts();persist();await maybeSnapshot();restoreSession();odInitDeepLink();fbAutoConnect();render();bindBack();bindPullRefresh();}
+async function init(){await openDB();let raw=await idbGet('kv','db');if(!raw){const ls=localStorage.getItem(KEY);if(ls){try{raw=JSON.parse(ls);}catch(e){}}}DB=raw||seed();migrate();normalize();prefillDemo();autoFinalizeDrafts();persist();await maybeSnapshot();restoreSession();odInitDeepLink();fbAutoConnect();render();bindBack();bindPullRefresh();scheduleMidnightSweep();}
 function uid(){return Math.random().toString(36).slice(2,9);}
 function seed(){
   const b1=uid(),b2=uid(),b3=uid(),sg=uid();
@@ -612,7 +593,8 @@ function studentsForEvent(e){const direct=DB.students.filter(s=>e.students.inclu
 function leadersForEvent(e){return DB.staff.filter(s=>e.leaders.includes(s.id));}
 function peopleForEvent(e){return [...leadersForEvent(e).map(x=>({...x,role:'leader'})),...studentsForEvent(e).map(x=>({...x,role:'student'}))];}
 function eventStatus(e){if(e.status==='completed')return {t:'Completed',c:'green'};const has=Object.keys(e.records||{}).length>0;const today=new Date().toISOString().slice(0,10);if(has)return e.date<today?{t:'Completed',c:'green'}:{t:'Draft',c:'orange'};if(e.date<today)return {t:'No Show',c:'red'};if(e.date>today)return {t:'Upcoming',c:'blue'};const now=new Date();const cur=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');const s=to24(e.start),en=to24(e.end);if(s&&cur<s)return {t:'Upcoming',c:'blue'};if(en&&cur>en)return {t:'Due',c:'orange'};return {t:'In progress',c:'red'};}
-function autoFinalizeDrafts(){const today=new Date().toISOString().slice(0,10);let n=0;DB.events.forEach(e=>{if(e.status!=='completed'&&Object.keys(e.records||{}).length>0&&e.date<today){peopleForEvent(e).forEach(p=>{if(!e.records[p.id])e.records[p.id]='absent';});e.status='completed';e.markedAt=e.markedAt||Date.now();e.markedBy=e.markedBy||'auto';n++;}});if(n)save(false);}
+function autoFinalizeDrafts(){const today=new Date().toISOString().slice(0,10);let n=0;DB.events.forEach(e=>{if(e.status!=='completed'&&Object.keys(e.records||{}).length>0&&e.date<today){peopleForEvent(e).forEach(p=>{if(!e.records[p.id])e.records[p.id]='absent';});e.status='completed';e.markedAt=e.markedAt||Date.now();e.markedBy=e.markedBy||'auto (day ended)';n++;}});if(n)save(false);return n;}
+function scheduleMidnightSweep(){const now=new Date();const next=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1,0,0,20);setTimeout(()=>{try{const n=autoFinalizeDrafts();if(n)render();}catch(e){}scheduleMidnightSweep();},Math.max(1000,next-now));}
 function isCompleted(e){return eventStatus(e).t==='Completed';}
 function countMarks(e){const p=peopleForEvent(e);let present=0,absent=0,late=0,un=0;p.forEach(x=>{const r=e.records[x.id];if(r==='present')present++;else if(r==='absent')absent++;else if(r==='late')late++;else un++;});return {present,absent,late,un,total:p.length};}
 /* student-only counts for reports/dashboard (leaders excluded) */
@@ -923,6 +905,7 @@ function ringSVG(pct){const r=40,c=2*Math.PI*r,off=c*(1-Math.max(0,Math.min(100,
 function greeting(){const h=new Date().getHours();return h<12?'Good morning':h<17?'Good afternoon':'Good evening';}
 function stCol(c){return c==='green'?'#16a34a':c==='red'?'#D0242F':c==='orange'?'#d97706':c==='blue'?'#2563eb':'#8a90a6';}
 function dashMark(){const _t=new Date().toISOString().slice(0,10);const td=DB.events.filter(e=>!e.archived&&e.date===_t);if(td.length)openMark(td[0].id);else{toast('No events today');go('calendar');}}
+function bindDashScroll(){const sc=document.getElementById('view');if(!sc||sc._dqb)return;sc._dqb=true;sc.addEventListener('scroll',()=>{if(route.tab!=='dashboard')return;const q=sc.querySelector('.dquick');if(q)q.classList.toggle('stuck',sc.scrollTop>4);},{passive:true});}
 function dashboardView(v){
   if(!dashScope.batch)dashScope.batch=DB.batches[0]?.id;
   const evs=scopeEvents();const bId=dashScope.type==='batch'?dashScope.batch:null;const t=tally(evs,bId);
@@ -974,8 +957,14 @@ function dashboardView(v){
       <div class="dhrow"><div class="dbig">${pp}<span>%</span></div><div class="dcap">Attendance · ${scopeLbl}<br>${t.present+t.late} of ${t.total} marks</div></div>
       ${segbar}
     </div>
-    <div class="dpills">${[[DB.students.length,'STUDENTS'],[evs.length,'EVENTS'],[DB.batches.length,'BATCHES'],[DB.staff.length,'LEADERS']].map(k=>`<div class="dpill"><b>${k[0]}</b><span>${k[1]}</span></div>`).join('')}</div>
+    <div class="dquick">
+      <button class="dqb" onclick="go('calendar')"><span class="dqi" style="color:#D0242F">${ico('cal')}</span><b>${notArch.length}</b><em>Events</em></button>
+      <button class="dqb" onclick="go('more','students')"><span class="dqi" style="color:#2563eb">${ico('users')}</span><b>${DB.students.length}</b><em>Students</em></button>
+      <button class="dqb" onclick="go('more','batches')"><span class="dqi" style="color:#16a34a">${ico('cap')}</span><b>${DB.batches.length}</b><em>Batches</em></button>
+      <button class="dqb" onclick="go('more','staff')"><span class="dqi" style="color:#7c5cff">${ico('crown')}</span><b>${DB.staff.length}</b><em>Staff</em></button>
+    </div>
     <div class="dbody">${inprogSection}${twoCol}${batchesFull}</div>`;
+  bindDashScroll();
 }
 
 /* ================= REPORTS ================= */
@@ -1015,7 +1004,7 @@ function reportsView(v){
   }
   v.innerHTML=`<div class="wrap">
     ${seg}
-    <div class="rpill"><button aria-label="Previous month" onclick="repShift(-1)">${ico('back')}</button><b>${mlabel}</b><button aria-label="Next month" onclick="repShift(1)">${ico('chev')}</button></div>
+    <div class="selrow"><select class="t" onchange="repM=+this.value;render()">${MONTHS.map((m,i)=>`<option value="${i}" ${i===repM?'selected':''}>${m}</option>`).join('')}</select><select class="t" onchange="repY=+this.value;render()">${years.map(y=>`<option ${y===repY?'selected':''}>${y}</option>`).join('')}</select></div>
     <div class="bento three" style="margin-bottom:6px"><div class="stat"><div class="n" style="color:var(--a1)">${evs.length}</div><div class="l">Events</div></div><div class="stat"><div class="n" style="color:var(--present)">${pp}%</div><div class="l">Attendance</div></div><div class="stat"><div class="n" style="color:var(--absent)">${a}</div><div class="l">Absences</div></div></div>
     ${body}</div>`;
   if(repMode==='student')repStuRefresh();
@@ -1581,7 +1570,7 @@ function exportMonthPDF(){if(!pdfReady())return;const evs=eventsInMonth(repY,rep
 function emailMonthReport(){emailChooser('month');}
 
 /* ================= VISIBILITY / BOOT ================= */
-document.addEventListener('visibilitychange',()=>{if(!document.hidden&&SESSION&&Date.now()>SESSION.exp){endSession();render();toast('Session timed out — please sign in');}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)return;if(SESSION&&Date.now()>SESSION.exp){endSession();render();toast('Session timed out — please sign in');return;}if(SESSION){const n=autoFinalizeDrafts();if(n){render();snack(n+' draft'+(n>1?'s':'')+' from earlier auto-completed (unmarked → absent).',null,3500);}}});
 setInterval(()=>{const c=$('clock');if(c)c.textContent=new Date().toLocaleTimeString('en-GB');},1000);
 init();
 </script>
