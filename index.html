@@ -30,9 +30,9 @@
   --orange:#d97706; --blue:#2563eb;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{margin:0;height:100%;}
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--txt);background:var(--bg);overscroll-behavior:none;overflow:hidden;-webkit-font-smoothing:antialiased;}
-#app{width:100%;max-width:100%;margin:0 auto;height:100%;display:flex;flex-direction:column;position:relative;}
+html,body{margin:0;padding:0;width:100%;height:100%;background:var(--a1);}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--txt);background:var(--bg);overscroll-behavior:none;overflow:hidden;-webkit-font-smoothing:antialiased;position:fixed;top:0;left:0;right:0;bottom:0;}
+#app{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;max-width:100%;height:100%;display:flex;flex-direction:column;}
 #header{flex:0 0 auto;}
 #view{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding-bottom:calc(90px + env(safe-area-inset-bottom));}
 #ptr{position:fixed;top:calc(env(safe-area-inset-top) + 6px);left:50%;transform:translateX(-50%) translateY(-46px);width:36px;height:36px;border-radius:50%;background:#fff;box-shadow:0 3px 12px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;opacity:0;z-index:60;transition:opacity .18s;}
@@ -213,6 +213,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans
 .seg2 button.on{background:var(--a1);border-color:transparent;color:#fff}
 .seg2 .calbtn{margin-left:auto;width:40px;height:34px;display:flex;align-items:center;justify-content:center;padding:0}
 .seg2 .calbtn.on{background:var(--a1);color:#fff;border-color:transparent}
+.calsticky{position:sticky;top:0;z-index:15;background:var(--bg);padding:6px 0 8px;margin-bottom:2px}
+.calsticky.stuck{box-shadow:0 8px 10px -8px rgba(20,25,45,.14)}
+.calsticky .seg2{margin-bottom:12px}
+.calsticky .weekstrip{margin-bottom:0}
 .weekstrip{display:flex;align-items:center;gap:4px;margin-bottom:8px}
 .weekstrip .wknav{background:var(--acc-soft);border:none;color:var(--a1);width:26px;height:52px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .wkdays{flex:1;display:flex;justify-content:space-between;gap:2px}
@@ -713,6 +717,7 @@ function saveNewPw(u){const a=$('np1').value,b=$('np2').value;if(!a||a!==b){toas
 function navMonth(dir){let m=cur.m+dir,y=cur.y;if(m<0){m=11;y--;}if(m>11){m=0;y++;}cur={y,m};selDay=null;render();}
 function attPct(e){const c=scount(e);return c.total?Math.round((c.present+c.late)/c.total*100):0;}
 function weekDaysOf(iso){const d=new Date(iso+'T00:00:00');const sun=new Date(d);sun.setDate(d.getDate()-d.getDay());const a=[];for(let i=0;i<7;i++){const x=new Date(sun);x.setDate(sun.getDate()+i);a.push(x.toISOString().slice(0,10));}return a;}
+function weekStripHTML(anchor){const today=new Date().toISOString().slice(0,10);const evD={};DB.events.filter(e=>!e.archived).forEach(e=>evD[e.date]=1);return weekDaysOf(anchor).map(ds=>{const d=new Date(ds+'T00:00:00');const cl=(ds===selDay?'sel ':'')+(ds===today?'today':'');return `<button class="wkday ${cl}" data-d="${ds}" onclick="pickDay('${ds}')"><span class="wd">${d.toLocaleDateString('en-GB',{weekday:'short'})}</span><span class="dn">${d.getDate()}</span>${evD[ds]?'<span class="wkdot"></span>':''}</button>`;}).join('');}
 function shiftWeek(dir){const base=weekAnchor||new Date().toISOString().slice(0,10);const d=new Date(base+'T00:00:00');d.setDate(d.getDate()+dir*7);weekAnchor=d.toISOString().slice(0,10);selDay=null;render();}
 function resetCal(){const t=new Date();if(calMin){weekAnchor=t.toISOString().slice(0,10);}else{cur={y:t.getFullYear(),m:t.getMonth()};}selDay=null;_scrollDate=null;render();}
 function grpLabel(dt){const today=new Date().toISOString().slice(0,10);const t=new Date();t.setDate(t.getDate()+1);const tom=t.toISOString().slice(0,10);const sh=new Date(dt+'T00:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});if(dt===today)return 'Today · '+sh;if(dt===tom)return 'Tomorrow · '+sh;return sh;}
@@ -737,7 +742,17 @@ function agRow(e){const st=eventStatus(e);const setup=needsSetup(e);const done=s
     <div class="agexp" id="agx-${e.id}">${info}<div class="agmeta2">${studentsForEvent(e).length} students · ${leadersForEvent(e).length} leaders${isPast?' · read-only':''}</div><div class="agacts">${acts}</div></div>
   </div>`;}
 function syncWkHi(d){const strip=document.querySelector('.wkdays');if(!strip)return;const cell=strip.querySelector('.wkday[data-d="'+d+'"]');const hi=strip.querySelector('.wkhi');if(!cell||!hi)return;const dn=cell.querySelector('.dn');const sr=strip.getBoundingClientRect(),cr=dn.getBoundingClientRect();hi.style.left=(cr.left-sr.left)+'px';hi.style.top=(cr.top-sr.top)+'px';hi.style.width=cr.width+'px';hi.style.height=cr.height+'px';hi.style.opacity='1';strip.querySelectorAll('.wkday').forEach(w=>w.classList.toggle('act',w.getAttribute('data-d')===d));}
-function bindAgendaScroll(){const sc=document.getElementById('view');if(!sc||sc._agb)return;sc._agb=true;sc.addEventListener('scroll',()=>{if(route.tab!=='calendar'||route.id||selDay||!calMin)return;const secs=sc.querySelectorAll('.agsec');if(!secs.length)return;const thr=sc.getBoundingClientRect().top+160;let d=null;secs.forEach(s=>{if(s.getBoundingClientRect().top<=thr)d=s.getAttribute('data-d');});if(!d)d=secs[0].getAttribute('data-d');if(d&&d!==_scrollDate){_scrollDate=d;const wk=weekDaysOf(weekAnchor||new Date().toISOString().slice(0,10));if(wk.indexOf(d)<0){weekAnchor=d;render();requestAnimationFrame(()=>syncWkHi(d));}else syncWkHi(d);}},{passive:true});}
+function bindAgendaScroll(){const sc=document.getElementById('view');if(!sc||sc._agb)return;sc._agb=true;sc.addEventListener('scroll',()=>{
+  const cal=sc.querySelector('.calsticky');if(cal)cal.classList.toggle('stuck',sc.scrollTop>4);
+  if(route.tab!=='calendar'||route.id||selDay||!calMin)return;
+  const secs=sc.querySelectorAll('.agsec');if(!secs.length)return;
+  const base=cal?cal.getBoundingClientRect().bottom:(sc.getBoundingClientRect().top+120);const thr=base+34;
+  let d=null;secs.forEach(s=>{if(s.getBoundingClientRect().top<=thr)d=s.getAttribute('data-d');});
+  if(!d)d=secs[0].getAttribute('data-d');
+  if(d&&d!==_scrollDate){_scrollDate=d;const wk=weekDaysOf(weekAnchor||new Date().toISOString().slice(0,10));
+    if(wk.indexOf(d)<0){weekAnchor=d;const wd=sc.querySelector('.wkdays');if(wd)wd.innerHTML=weekStripHTML(d)+'<span class="wkhi"></span>';requestAnimationFrame(()=>syncWkHi(d));}
+    else syncWkHi(d);}
+},{passive:true});}
 function calendarView(v){
   const today=new Date().toISOString().slice(0,10);
   const nowHM=String(new Date().getHours()).padStart(2,'0')+':'+String(new Date().getMinutes()).padStart(2,'0');
@@ -748,7 +763,7 @@ function calendarView(v){
   for(let d=1;d<=daysIn;d++){const ds=ymd(cur.y,cur.m,d);const cl=['cell'];if(ds===selDay)cl.push('sel');else if(ds===today)cl.push('today');cells+=`<div class="${cl.join(' ')}" onclick="pickDay('${ds}')">${d}${evD[ds]?'<span class="evdot"></span>':''}</div>`;}
   const used=first+daysIn,trail=(7-(used%7))%7;for(let i=1;i<=trail;i++)cells+=`<div class="cell mute">${i}</div>`;
   const wk=weekDaysOf(weekAnchor||today);
-  const strip=wk.map(ds=>{const d=new Date(ds+'T00:00:00');const cl=ds===today?'today':'';return `<button class="wkday ${cl}" data-d="${ds}" onclick="pickDay('${ds}')"><span class="wd">${d.toLocaleDateString('en-GB',{weekday:'short'})}</span><span class="dn">${d.getDate()}</span>${evD[ds]?'<span class="wkdot"></span>':''}</button>`;}).join('');
+  const strip=weekStripHTML(weekAnchor||today);
   let list;
   if(!calMin){list=DB.events.filter(e=>{if(e.archived)return false;const dd=new Date(e.date+'T00:00:00');return dd.getFullYear()===cur.y&&dd.getMonth()===cur.m;});if(selDay)list=list.filter(e=>e.date===selDay);}
   else if(selDay)list=DB.events.filter(e=>!e.archived&&e.date===selDay);
@@ -770,7 +785,7 @@ function calendarView(v){
       return `<div class="egrp agsec" data-d="${dt}"><div class="edot" style="background:${col}"></div><div class="edl" style="color:${col}">${grpLabel(dt)}</div>${rows}</div>`;
     }).join('')+`</div>`:`<div class="empty">${ico('cal')}<div>${selDay?'No events on this day':('No '+scopeWord+' events')}.</div></div>`;
   v.innerHTML=`<div class="wrap">
-    <div class="seg2">
+    <div class="calsticky"><div class="seg2">
       <button class="${!selDay&&calMin&&agendaFilter==='today'?'on':''}" onclick="selDay=null;_scrollDate=null;calMin=true;agendaFilter='today';render()">Today</button>
       <button class="${!selDay&&calMin&&agendaFilter==='upcoming'?'on':''}" onclick="selDay=null;_scrollDate=null;calMin=true;agendaFilter='upcoming';render()">Upcoming</button>
       <button class="${!selDay&&calMin&&agendaFilter==='past'?'on':''}" onclick="selDay=null;_scrollDate=null;calMin=true;agendaFilter='past';render()">Past</button>
@@ -778,7 +793,7 @@ function calendarView(v){
       <button class="calbtn ${calMin?'':'on'}" aria-label="Month view" onclick="calMin=!calMin;selDay=null;_scrollDate=null;render()">${ico('cal')}</button>
     </div>
     ${calMin?`<div class="weekstrip"><button class="wknav" aria-label="Previous week" onclick="shiftWeek(-1)">${ico('back')}</button><div class="wkdays">${strip}<span class="wkhi"></span></div><button class="wknav" aria-label="Next week" onclick="shiftWeek(1)">${ico('chev')}</button></div>`
-      :`<div class="card compactcal"><div class="calhead"><button onclick="navMonth(-1)">${ico('back')}</button><b style="cursor:pointer" onclick="openMonthPicker()">${monthName} ▾</b><button onclick="navMonth(1)">${ico('chev')}</button></div><div class="dow"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div><div class="grid">${cells}</div></div>`}
+      :`<div class="card compactcal"><div class="calhead"><button onclick="navMonth(-1)">${ico('back')}</button><b style="cursor:pointer" onclick="openMonthPicker()">${monthName} ▾</b><button onclick="navMonth(1)">${ico('chev')}</button></div><div class="dow"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div><div class="grid">${cells}</div></div>`}</div>
     ${summary}${agenda}</div>`;
   bindAgendaScroll();
   requestAnimationFrame(()=>{if(calMin)syncWkHi(selDay||_scrollDate||today);});
