@@ -203,11 +203,15 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans
 .calbar b{flex:1;text-align:center;font-size:15px;font-weight:800;cursor:pointer}
 .calbar button{background:var(--acc-soft);border:none;color:var(--a1);width:32px;height:32px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .calbar .mini-toggle{width:auto;padding:0 12px;font-size:12px;font-weight:800}
-.compactcal{padding:10px}
+.compactcal{padding:8px 10px}
+.compactcal .calhead{padding:2px 2px 8px}
+.compactcal .calhead b{font-size:15px}
+.compactcal .calhead button{width:30px;height:30px;border-radius:9px}
 .compactcal .grid{gap:2px}
-.compactcal .cell{font-size:12.5px;border-radius:8px}
-.compactcal .cell .evdot{width:4px;height:4px;bottom:4px}
-.compactcal .dow{font-size:9px;margin-bottom:4px}
+.compactcal .cell{aspect-ratio:auto;height:30px;font-size:12px;font-weight:600;border-radius:8px}
+.compactcal .cell.today:not(.sel){box-shadow:inset 0 0 0 1.3px var(--a1)}
+.compactcal .cell .evdot{width:4px;height:4px;bottom:2px}
+.compactcal .dow{font-size:9px;margin-bottom:3px}
 .seg2{display:flex;gap:8px;align-items:center;margin-bottom:14px}
 .seg2 button{border:0.5px solid var(--line);background:#fff;color:var(--muted);font-size:13px;font-weight:700;padding:7px 13px;border-radius:999px;cursor:pointer}
 .seg2 button.on{background:var(--a1);border-color:transparent;color:#fff}
@@ -217,7 +221,10 @@ body{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans
 .calsticky.stuck{box-shadow:0 8px 10px -8px rgba(20,25,45,.14)}
 .calsticky .seg2{margin-bottom:12px}
 .calsticky .weekstrip{margin-bottom:0}
-.weekstrip{display:flex;align-items:center;gap:4px;margin-bottom:8px}
+.weekstrip{display:flex;align-items:stretch;gap:0;margin-bottom:8px}
+.wkmy{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0 11px 0 2px;margin-right:9px;border-right:1px solid var(--line);flex-shrink:0;line-height:1.08}
+.wkmy b{font-size:13px;font-weight:800;color:var(--a1);letter-spacing:.02em}
+.wkmy span{font-size:10px;color:var(--dim);font-weight:700}
 .weekstrip .wknav{background:var(--acc-soft);border:none;color:var(--a1);width:26px;height:52px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .wkdays{flex:1;display:flex;justify-content:space-between;gap:2px}
 .wkday{flex:1;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 0;position:relative;color:var(--txt)}
@@ -418,6 +425,11 @@ input.t:focus,select.t:focus,textarea.t:focus{outline:none;border-color:var(--a1
 .login h2{margin:0 0 2px;font-size:20px}.login .sub{color:var(--muted);font-size:13px;margin-bottom:6px}
 .linkbtn{background:none;border:none;color:var(--a1);font-weight:700;font-size:13px;cursor:pointer;padding:8px 0}
 .brandline{margin-top:16px;font-size:12px;opacity:.85;text-align:center}
+.bioicon{width:58px;height:58px;padding:0;margin:14px auto 0;border-radius:18px}
+.bioicon .ic{width:30px;height:30px}
+.biocheck{display:flex;align-items:center;justify-content:center;gap:7px;font-size:13px;color:var(--muted);margin-top:14px;cursor:pointer}
+.biocheck input{width:auto}
+.biocheck .ic{width:18px;height:18px;color:var(--a1)}
 /* small phones */
 @media (max-width:400px){
   .topbar{padding-left:calc(12px + env(safe-area-inset-left));padding-right:calc(12px + env(safe-area-inset-right))}
@@ -472,7 +484,8 @@ const P={
  logout:'<path d="M15 12H3M8 7l-5 5 5 5"/><path d="M13 4h6a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-6"/>',
  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
  chat:'<path d="M21 12a8 8 0 0 1-11.5 7.2L3 21l1.8-6.5A8 8 0 1 1 21 12z"/>',
- wa:'<path d="M12 3a9 9 0 0 0-7.7 13.6L3 21l4.6-1.2A9 9 0 1 0 12 3z"/>', dots:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>'
+ wa:'<path d="M12 3a9 9 0 0 0-7.7 13.6L3 21l4.6-1.2A9 9 0 1 0 12 3z"/>', dots:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
+ fingerprint:'<path d="M4.8 8.2A9 9 0 0 1 12 4.5a9 9 0 0 1 7.2 3.7"/><path d="M6 12a6 6 0 0 1 12 0c0 .8-.05 1.5-.15 2.2"/><path d="M9 11.6a3 3 0 0 1 6 .4c0 3-.4 5-1.1 6.9"/><path d="M12 12v3.4"/><path d="M8.4 14c.2 2 .1 4-.7 6"/><path d="M15.4 16.6c-.3 1.4-.7 2.7-1.2 3.8"/>'
 };
 function ico(n,e){return `<svg class="ic ${e||''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${P[n]||''}</svg>`;}
 function logoHTML(size){const b=Math.round(size*.34),s=Math.round(size*.11);return `<div class="logo" style="width:${size}px;height:${size}px"><b style="font-size:${b}px">SPJ</b><span style="font-size:${s}px">LONDON</span></div>`;}
@@ -647,16 +660,16 @@ function renderHeader(){let h='';
 function loginView(v){
   v.innerHTML=`<div class="login">${logoHTML(96)}
     <div class="box"><h2>Welcome back</h2><div class="sub">Sign in to Global Learning Activities</div>
-      <label class="f">Username</label><input class="t" id="luser" autocomplete="off" autocapitalize="off" placeholder="Enter username">
-      <label class="f">Password</label><input class="t" id="lpw" type="password" autocomplete="new-password" placeholder="Enter password">
+      <input class="t" id="luser" style="margin-top:14px" autocomplete="off" autocapitalize="off" placeholder="Enter username">
+      <input class="t" id="lpw" type="password" style="margin-top:10px" autocomplete="new-password" placeholder="Enter password">
       <button class="btn primary" style="margin-top:16px" onclick="doLogin()">${ico('lock')} Sign In</button>
       <div id="biorow"></div>
       <div style="text-align:center"><button class="linkbtn" onclick="forgotFlow()">Forgot password?</button></div>
     </div><div class="brandline">🔒 On-device only · auto sign-out after 2 hours</div></div>`;
   setTimeout(()=>{const el=$('luser');if(el)el.focus();},50);
   setTimeout(async()=>{const row=$('biorow');if(!row)return;if(!(await bioAvailable()))return;
-    if(bioEnabled()){row.innerHTML=`<button class="btn subtle" style="margin-top:10px" onclick="bioUnlock()">${ico('lock')} Unlock with Face ID / fingerprint</button>`;if(isNative())bioUnlock();}
-    else{row.innerHTML=`<label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-top:12px"><input type="checkbox" id="lbio" style="width:auto"> Enable biometric / device-PIN unlock</label>`;}
+    if(bioEnabled()){row.innerHTML=`<button class="btn subtle bioicon" aria-label="Unlock with Face ID or fingerprint" title="Unlock with Face ID / fingerprint" onclick="bioUnlock()">${ico('fingerprint')}</button>`;if(isNative())bioUnlock();}
+    else{row.innerHTML=`<label class="biocheck"><input type="checkbox" id="lbio">${ico('fingerprint')}<span>Biometric unlock</span></label>`;}
   },80);
 }
 function findUser(u){u=(u||'').trim().toLowerCase();return DB.users.find(x=>x.u.toLowerCase()===u);}
@@ -741,7 +754,9 @@ function agRow(e){const st=eventStatus(e);const setup=needsSetup(e);const done=s
     <div class="agsub">${fmtTime(e.start)} – ${fmtTime(e.end)}${e.batches.length?' · '+esc(e.batches.map(batchName).join(', ')):''} · <span style="color:${stCol(st.c)};font-weight:800">${chipTxt}</span></div>
     <div class="agexp" id="agx-${e.id}">${info}<div class="agmeta2">${studentsForEvent(e).length} students · ${leadersForEvent(e).length} leaders${isPast?' · read-only':''}</div><div class="agacts">${acts}</div></div>
   </div>`;}
-function syncWkHi(d){const strip=document.querySelector('.wkdays');if(!strip)return;const cell=strip.querySelector('.wkday[data-d="'+d+'"]');const hi=strip.querySelector('.wkhi');if(!cell||!hi)return;const dn=cell.querySelector('.dn');const sr=strip.getBoundingClientRect(),cr=dn.getBoundingClientRect();hi.style.left=(cr.left-sr.left)+'px';hi.style.top=(cr.top-sr.top)+'px';hi.style.width=cr.width+'px';hi.style.height=cr.height+'px';hi.style.opacity='1';strip.querySelectorAll('.wkday').forEach(w=>w.classList.toggle('act',w.getAttribute('data-d')===d));}
+function syncWkHi(d){const my=document.querySelector('.wkmy');if(my){const dt=new Date((d||new Date().toISOString().slice(0,10))+'T00:00:00');my.querySelector('b').textContent=dt.toLocaleDateString('en-GB',{month:'short'}).toUpperCase();my.querySelector('span').textContent=dt.getFullYear();}
+  const strip=document.querySelector('.wkdays');if(!strip)return;const cell=strip.querySelector('.wkday[data-d="'+d+'"]');const hi=strip.querySelector('.wkhi');if(!cell||!hi)return;const dn=cell.querySelector('.dn');const sr=strip.getBoundingClientRect(),cr=dn.getBoundingClientRect();hi.style.left=(cr.left-sr.left)+'px';hi.style.top=(cr.top-sr.top)+'px';hi.style.width=cr.width+'px';hi.style.height=cr.height+'px';hi.style.opacity='1';strip.querySelectorAll('.wkday').forEach(w=>w.classList.toggle('act',w.getAttribute('data-d')===d));}
+function bindWeekSwipe(){const el=document.querySelector('.weekstrip');if(!el)return;let x0=null,y0=null;el.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});el.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if(Math.abs(dx)>45&&Math.abs(dx)>Math.abs(dy)*1.5)shiftWeek(dx<0?1:-1);},{passive:true});}
 function bindAgendaScroll(){const sc=document.getElementById('view');if(!sc||sc._agb)return;sc._agb=true;sc.addEventListener('scroll',()=>{
   const cal=sc.querySelector('.calsticky');if(cal)cal.classList.toggle('stuck',sc.scrollTop>4);
   if(route.tab!=='calendar'||route.id||selDay||!calMin)return;
@@ -792,10 +807,10 @@ function calendarView(v){
       <button class="calbtn" aria-label="Jump to ${calMin?'this week':'this month'}" onclick="resetCal()">${ico('today')}</button>
       <button class="calbtn ${calMin?'':'on'}" aria-label="Month view" onclick="calMin=!calMin;selDay=null;_scrollDate=null;render()">${ico('cal')}</button>
     </div>
-    ${calMin?`<div class="weekstrip"><button class="wknav" aria-label="Previous week" onclick="shiftWeek(-1)">${ico('back')}</button><div class="wkdays">${strip}<span class="wkhi"></span></div><button class="wknav" aria-label="Next week" onclick="shiftWeek(1)">${ico('chev')}</button></div>`
+    ${calMin?`<div class="weekstrip"><div class="wkmy" aria-hidden="true"><b></b><span></span></div><div class="wkdays">${strip}<span class="wkhi"></span></div></div>`
       :`<div class="card compactcal"><div class="calhead"><button onclick="navMonth(-1)">${ico('back')}</button><b style="cursor:pointer" onclick="openMonthPicker()">${monthName} ▾</b><button onclick="navMonth(1)">${ico('chev')}</button></div><div class="dow"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div><div class="grid">${cells}</div></div>`}</div>
     ${summary}${agenda}</div>`;
-  bindAgendaScroll();
+  bindAgendaScroll();bindWeekSwipe();
   requestAnimationFrame(()=>{if(calMin)syncWkHi(selDay||_scrollDate||today);});
 }
 
