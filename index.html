@@ -903,7 +903,7 @@ function calendarView(v){
   const pal2=['#D0242F','#2563eb','#16a34a','#7c5cff','#d97706','#0891b2'];
   const agenda=dates.length?`<div class="etl">`+dates.map((dt,i)=>{const col=pal2[i%pal2.length];
       let rows='';const isToday=dt===today&&!desc;let placed=false;
-      groups[dt].forEach(e=>{if(isToday&&!placed&&to24(e.start)>=nowHM){rows+=`<div class="agnow"><span class="agnowline"></span><span class="agnowt">now ${fmtTime(nowHM)}</span></div>`;placed=true;}rows+=(isLive(e)?liveCardHTML(e):agRow(e));});
+      groups[dt].forEach((e,ei)=>{if(isToday&&!placed&&to24(e.start)>=nowHM){rows+=`<div class="agnow"><span class="agnowline"></span><span class="agnowt">now ${fmtTime(nowHM)}</span></div>`;placed=true;}rows+=(isToday?liveCardHTML(e,ei):agRow(e));});
       if(isToday&&!placed)rows+=`<div class="agnow"><span class="agnowline"></span><span class="agnowt">now ${fmtTime(nowHM)}</span></div>`;
       return `<div class="egrp agsec" data-d="${dt}"><div class="edot" style="background:${col}"></div><div class="edl" style="color:${col}">${grpLabel(dt)}</div>${rows}</div>`;
     }).join('')+`</div>`:`<div class="empty">${ico('cal')}<div>${selDay?'No events on this day':('No '+scopeWord+' events')}.</div></div>`;
