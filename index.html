@@ -381,6 +381,8 @@ body{margin:0;padding:0;overflow:hidden;overscroll-behavior:none;background:var(
 .card.ev-arch{background:#eff1f6;border-color:#dfe2ec}
 .card.ev-arch .title{color:#5a6079}
 .dstick{position:sticky;top:0;z-index:20;background:var(--bg)}
+@keyframes pgIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:no-preference){.pgin{animation:pgIn .42s cubic-bezier(.2,.7,.2,1) both}}
 .badge-setup{background:#ffedd5;color:#b45309;font-size:9px;font-weight:800;padding:2px 7px;border-radius:999px;margin-left:6px;white-space:nowrap}
 .daychip{display:inline-flex;align-items:center;gap:8px;background:var(--acc-soft);color:var(--a1);font-weight:700;font-size:13px;padding:7px 13px;border-radius:999px;border:none;cursor:pointer}
 .spark{display:flex;align-items:flex-end;gap:4px;height:46px;margin-top:14px}
@@ -777,6 +779,8 @@ function rrpBody(){const b=$('rrpBody');if(!b)return;const h=$('rrpHint');if(h)h
   if(_rrp.mode==='year'){const s=_rrp.bundle;b.innerHTML=`<div class="calhead"><button onclick="_rrp.bundle-=12;rrpBody()">${ico('back')}</button><b>${s} – ${s+11}</b><button onclick="_rrp.bundle+=12;rrpBody()">${ico('chev')}</button></div><div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px">${Array.from({length:12},(_,k)=>s+k).map(y=>`<button class="ftab" style="min-width:0;width:100%;padding:14px 0" onclick="_rrp.year=${y};_rrp.mode='month';rrpBody()">${y}</button>`).join('')}</div>`;return;}
   b.innerHTML=`<div class="calhead"><button onclick="_rrp.year--;rrpBody()">${ico('back')}</button><b style="cursor:pointer" onclick="_rrp.mode='year';_rrp.bundle=_rrp.year-(_rrp.year%12);rrpBody()">${_rrp.year} ▾</b><button onclick="_rrp.year++;rrpBody()">${ico('chev')}</button></div><div class="grid" style="grid-template-columns:repeat(3,1fr);gap:8px">${MONTHS.map((m,i)=>`<button class="ftab" style="min-width:0;width:100%;padding:14px 0;${_rrp.step==='to'&&_rrp.year===_rrp.fy&&i===_rrp.fm?'background:var(--acc-soft);color:var(--a1)':''}" onclick="rrpPick(${i})">${m.slice(0,3)}</button>`).join('')}</div>`;}
 function rrpPick(m){if(_rrp.step==='from'){_rrp.fm=m;_rrp.fy=_rrp.year;_rrp.step='to';if(_rrp.year<_rrp.fy)_rrp.year=_rrp.fy;_rrp.bundle=_rrp.year-(_rrp.year%12);_rrp.mode='month';rrpBody();}else{if(new Date(_rrp.fy,_rrp.fm)>new Date(_rrp.year,m)){toast('End must be on/after start');return;}repRange={fy:_rrp.fy,fm:_rrp.fm,ty:_rrp.year,tm:m};closeSheet();render();}}
+let _lastPage='';
+function animatePage(v){try{if(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches)return;const els=v.querySelectorAll('.card,.livecard,.agcard,.minfo,.evcard,.strow,.slist');let i=0;els.forEach(el=>{el.classList.add('pgin');el.style.animationDelay=(Math.min(i,10)*0.05).toFixed(2)+'s';i++;});}catch(e){}}
 function render(){
   if(SESSION&&Date.now()>SESSION.exp){endSession();}
   if(!SESSION){document.body.classList.remove('authed');$('nav').style.display='none';$('header').innerHTML='';$('fab').style.display='none';$('view').style.paddingBottom='0';loginView($('view'));return;}
@@ -787,6 +791,8 @@ function render(){
   else if(route.tab==='dashboard')dashboardView(v);
   else if(route.tab==='reports'){route.sub==='export'?exportView(v):reportsView(v);}
   else if(route.tab==='more')moreView(v);
+  const _pk=route.tab+'|'+(route.sub||'')+'|'+(route.id||'')+'|'+(route.mode||'');
+  if(_pk!==_lastPage){_lastPage=_pk;animatePage(v);}
   window.scrollTo(0,0);
 }
 function renderNav(){const tabs=isMarker()?[['dashboard','grid','Home']]:[['dashboard','grid','Home'],['calendar','cal','Events'],['reports','doc','Reports'],['more','more','More']];$('nav').innerHTML=tabs.map(([t,i,l])=>`<button class="${route.tab===t?'active':''}" onclick="go('${t}')">${ico(i)}${l}</button>`).join('');}
