@@ -643,7 +643,7 @@ function idbDel(store,key){return new Promise(res=>{if(!_idb)return res();try{co
 function persist(){if(_idb)idbPut('kv',DB,'db');try{localStorage.setItem(KEY,JSON.stringify(DB));}catch(e){}if(typeof fbMaybePush==='function')fbMaybePush();}
 function migrate(){const s=seed();DB.users=DB.users||s.users;DB.meta=DB.meta||{rev:0,backupRev:0};DB.meta.autoBackup=DB.meta.autoBackup||'off';DB.meta.lastBackupAt=DB.meta.lastBackupAt||0;DB.meta.backupUrl=DB.meta.backupUrl||'';DB.meta.backupToken=DB.meta.backupToken||'';if(typeof DB.meta.includeSecrets!=='boolean')DB.meta.includeSecrets=false;DB.smtp=DB.smtp||s.smtp;DB.recipients=DB.recipients||s.recipients;(function(){const a=DB.users.find(u=>u.u==='Admin');if(a&&a.ph==='144fa9ec')a.ph='225e82e4';})();}
 /* returns DB for export; strips SMTP password & relay token unless includeSecrets is on */
-function exportDB(){const c=JSON.parse(JSON.stringify(DB));if(!(DB.meta&&DB.meta.includeSecrets)){if(c.smtp)c.smtp.pass='';if(c.meta)c.meta.backupToken='';}return c;}
+function exportDB(){const c=JSON.parse(JSON.stringify(DB));if(!(DB.meta&&DB.meta.includeSecrets)){if(c.smtp){c.smtp.pass='';c.smtp.relayToken='';}if(c.meta)c.meta.backupToken='';}return c;}
 function exportJSON(){return JSON.stringify(exportDB(),null,2);}
 function abInterval(){return DB.meta.autoBackup==='daily'?864e5:DB.meta.autoBackup==='weekly'?6048e5:0;}
 async function checkAutoBackup(){const iv=abInterval();if(!iv||!SESSION)return;const last=DB.meta.lastBackupAt||0;if(Date.now()-last<iv)return;if(FB.connected){const ok=await fbBackupSilent();if(ok){DB.meta.backupRev=DB.meta.rev||0;DB.meta.lastBackupAt=Date.now();persist();snack('Auto-backup saved to Firestore',null,2500);}return;}
@@ -1723,8 +1723,9 @@ function editSmtp(){const s=DB.smtp||{};sheet(`<h3>Email / SMTP settings</h3><di
   <label class="f">Username</label><input class="t" id="smU" value="${esc(s.user||'')}" autocomplete="off">
   <label class="f">Password / App password</label><input class="t" id="smPw" type="password" value="${esc(s.pass||'')}" autocomplete="new-password">
   <label class="f">Send relay endpoint (HTTPS)</label><input class="t" id="smR" value="${esc(s.relay||'')}" placeholder="https://your-relay.example.com/send">
+  <label class="f">Relay token (optional)</label><input class="t" id="smRT" value="${esc(s.relayToken||'')}" autocomplete="off" placeholder="Only if your relay requires RELAY_TOKEN"><div class="mini" style="margin:2px 2px 0;color:var(--muted)">Match the <b>RELAY_TOKEN</b> set on your relay. Also used for Outlook (ICS) sync.</div>
   <button class="btn primary" style="margin-top:16px" onclick="saveSmtp()">Save settings</button><button class="btn ghost" style="margin-top:10px" onclick="closeSheet()">Cancel</button>`);}
-function saveSmtp(){DB.smtp={fromName:$('smFn').value.trim(),fromEmail:$('smFe').value.trim(),host:$('smH').value.trim(),port:$('smP').value.trim(),secure:$('smS').value,user:$('smU').value.trim(),pass:$('smPw').value,relay:$('smR').value.trim()};save();closeSheet();render();toast('Email settings saved');}
+function saveSmtp(){DB.smtp={fromName:$('smFn').value.trim(),fromEmail:$('smFe').value.trim(),host:$('smH').value.trim(),port:$('smP').value.trim(),secure:$('smS').value,user:$('smU').value.trim(),pass:$('smPw').value,relay:$('smR').value.trim(),relayToken:$('smRT').value.trim()};save();closeSheet();render();toast('Email settings saved');}
 function blobToB64(blob){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(blob);});}
 async function emailReport(subject,filename,blob,mime){
   mime=mime||'application/octet-stream';
@@ -1734,7 +1735,7 @@ async function emailReport(subject,filename,blob,mime){
     snack('Sending email…',null,4000);
     try{
       const b64=await blobToB64(blob);
-      const res=await fetch(s.relay,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({host:s.host,port:s.port,secure:s.secure,user:s.user,pass:s.pass,fromName:s.fromName,from:s.fromEmail,to,subject,filename,mime,attachmentBase64:b64})});
+      const res=await fetch(s.relay,{method:'POST',headers:{'Content-Type':'application/json','X-Relay-Token':s.relayToken||''},body:JSON.stringify({host:s.host,port:s.port,secure:s.secure,user:s.user,pass:s.pass,fromName:s.fromName,from:s.fromEmail,to,subject,filename,mime,attachmentBase64:b64})});
       if(res.ok){snack('✓ Email sent successfully to '+to.length+' recipient'+(to.length>1?'s':''),null,3000);}
       else{let msg='';try{msg=(await res.text()).slice(0,120);}catch(e){}snack('✗ Send failed ('+res.status+') '+msg,null,4500);}
     }catch(err){snack('✗ Send failed: '+(err&&err.message||'network error'),null,4500);}
@@ -1755,7 +1756,7 @@ async function emailReportMulti(subject,files){
     snack('Sending email…',null,4000);
     try{
       const atts=[];for(const f of files){atts.push({filename:f.filename,mime:f.mime,base64:await blobToB64(f.blob)});}
-      const res=await fetch(s.relay,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({host:s.host,port:s.port,secure:s.secure,user:s.user,pass:s.pass,fromName:s.fromName,from:s.fromEmail,to,subject,attachments:atts,filename:atts[0].filename,mime:atts[0].mime,attachmentBase64:atts[0].base64})});
+      const res=await fetch(s.relay,{method:'POST',headers:{'Content-Type':'application/json','X-Relay-Token':s.relayToken||''},body:JSON.stringify({host:s.host,port:s.port,secure:s.secure,user:s.user,pass:s.pass,fromName:s.fromName,from:s.fromEmail,to,subject,attachments:atts,filename:atts[0].filename,mime:atts[0].mime,attachmentBase64:atts[0].base64})});
       if(res.ok){snack('✓ Email sent to '+to.length+' recipient'+(to.length>1?'s':''),null,3000);}
       else{let m='';try{m=(await res.text()).slice(0,120);}catch(e){}snack('✗ Send failed ('+res.status+') '+m,null,4500);}
     }catch(err){snack('✗ Send failed: '+(err&&err.message||'network error'),null,4500);}
@@ -1799,7 +1800,7 @@ function csvBlob(rows){return new Blob([rows.map(r=>r.map(csvEsc).join(',')).joi
 /* ================= OUTLOOK CALENDAR (ICS subscribe) ================= */
 function icsDate(v){v=(v||'').trim();const m=v.match(/(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})?(Z)?)?/);if(!m)return null;const p=n=>String(n).padStart(2,'0');if(m[4]==null)return{date:m[1]+'-'+m[2]+'-'+m[3],time:'00:00'};if(m[7]==='Z'){const d=new Date(Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0)));return{date:d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()),time:p(d.getHours())+':'+p(d.getMinutes())};}return{date:m[1]+'-'+m[2]+'-'+m[3],time:m[4]+':'+m[5]};}
 function parseICS(text){text=String(text||'').replace(/\r\n/g,'\n').replace(/\n[ \t]/g,'');const out=[];const blocks=text.split('BEGIN:VEVENT').slice(1);blocks.forEach(bl=>{let b='\n'+bl.split('END:VEVENT')[0];const g=re=>{const m=b.match(re);return m?m[1].trim():'';};const uid=g(/\nUID:(.*)/);const sum=g(/\nSUMMARY:(.*)/).replace(/\\,/g,',').replace(/\\;/g,';').replace(/\\n/gi,' ');const ds=g(/\nDTSTART[^:\n]*:(.*)/);const de=g(/\nDTEND[^:\n]*:(.*)/);const s=icsDate(ds);const e2=icsDate(de);if(s&&(uid||sum))out.push({uid:uid||('spj-'+ds+'-'+sum).slice(0,80),name:sum||'Outlook event',date:s.date,start:s.time,end:e2?e2.time:s.time});});return out;}
-async function icsGetText(url){if(isNative())return await (await fetch(url)).text();const relay=(DB.smtp&&DB.smtp.relay)||'';if(relay){const base=relay.replace(/\/send\/?$/,'');const r=await fetch(base+'/ics',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});if(!r.ok)throw new Error('relay '+r.status);return await r.text();}return await (await fetch(url)).text();}
+async function icsGetText(url){if(isNative())return await (await fetch(url)).text();const relay=(DB.smtp&&DB.smtp.relay)||'';if(relay){const base=relay.replace(/\/send\/?$/,'');const r=await fetch(base+'/ics',{method:'POST',headers:{'Content-Type':'application/json','X-Relay-Token':(DB.smtp&&DB.smtp.relayToken)||''},body:JSON.stringify({url})});if(!r.ok)throw new Error('relay '+r.status);return await r.text();}return await (await fetch(url)).text();}
 async function icsSync(manual){const url=((DB.meta&&DB.meta.icsUrl)||'').trim();if(!url){if(manual)toast('Add an Outlook ICS link first');return;}if(manual)snack('Syncing Outlook calendar…',null,3000);let text;try{text=await icsGetText(url);}catch(e){if(manual)snack('Sync failed: '+((e&&e.message)||'network / CORS — set up the email relay for web'),null,5000);return;}
   const items=parseICS(text);const feed=new Set(items.map(x=>x.uid));const today=new Date().toISOString().slice(0,10);let added=0,updated=0,removed=0,kept=0;
   items.forEach(x=>{if(!x.uid||!x.date)return;const e=DB.events.find(ev=>ev.extUid===x.uid);if(e){if(e.source==='outlook'&&e.status!=='completed'){if(e.name!==x.name||e.date!==x.date||e.start!==x.start||e.end!==x.end){e.name=x.name;e.date=x.date;e.start=x.start;e.end=x.end;updated++;}}}else{DB.events.push({id:uid(),extUid:x.uid,source:'outlook',name:x.name,date:x.date,start:x.start,end:x.end,batches:[],students:[],leaders:[],records:{},archived:false});added++;}});
