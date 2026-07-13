@@ -268,6 +268,7 @@ body{margin:0;padding:0;position:fixed;inset:0;overflow:hidden;overscroll-behavi
 .archrow{opacity:.62}
 .badge-arch{font-size:8px;font-weight:800;background:#e5e8f1;color:#646c88;padding:2px 6px;border-radius:5px;margin-left:6px;vertical-align:middle}
 .rep-pending{opacity:.55}
+.btn.rep-off{opacity:.5;cursor:not-allowed;background:#eef1f8;color:#8a90a6}
 .rep-badge{font-size:9px;font-weight:800;padding:2px 7px;border-radius:6px;vertical-align:middle;display:inline-flex;align-items:center;gap:3px}
 .rep-badge.done{background:#e5f6ed;color:#0f6e56}
 .rep-badge.wait{background:#eef1f8;color:#8a90a6}
@@ -642,6 +643,7 @@ function eventStatus(e){if(e.status==='completed')return {t:'Completed',c:'green
 function autoFinalizeDrafts(){const today=new Date().toISOString().slice(0,10);let n=0;DB.events.forEach(e=>{if(e.status!=='completed'&&Object.keys(e.records||{}).length>0&&e.date<today){peopleForEvent(e).forEach(p=>{if(!e.records[p.id])e.records[p.id]='absent';});e.status='completed';e.markedAt=e.markedAt||Date.now();e.markedBy=e.markedBy||'auto (day ended)';n++;}});if(n)save(false);return n;}
 function scheduleMidnightSweep(){const now=new Date();const next=new Date(now.getFullYear(),now.getMonth(),now.getDate()+1,0,0,20);setTimeout(()=>{try{const n=autoFinalizeDrafts();if(n)render();}catch(e){}scheduleMidnightSweep();},Math.max(1000,next-now));}
 function isCompleted(e){return eventStatus(e).t==='Completed';}
+function evReportReady(e){return !!e&&(isCompleted(e)||Object.keys(e.records||{}).length>0);}
 function countMarks(e){const p=peopleForEvent(e);let present=0,absent=0,late=0,un=0;p.forEach(x=>{const r=e.records[x.id];if(r==='present')present++;else if(r==='absent')absent++;else if(r==='late')late++;else un++;});return {present,absent,late,un,total:p.length};}
 /* student-only counts for reports/dashboard (leaders excluded) */
 function scount(e){const st=studentsForEvent(e);let present=0,absent=0,late=0;st.forEach(s=>{const r=e.records[s.id];if(r==='present')present++;else if(r==='absent')absent++;else if(r==='late')late++;});return {present,absent,late,total:present+absent+late,students:st.length};}
@@ -902,7 +904,7 @@ function calendarView(v){
 
 /* ================= EVENT DETAIL ================= */
 function eventDetail(v){
-  const e=DB.events.find(x=>x.id===route.id);const st=studentsForEvent(e),ld=leadersForEvent(e),status=eventStatus(e);const done=status.t==='Completed';const c=scount(e);const ls=leaderStat(e);const _td=new Date().toISOString().slice(0,10);const isToday=e.date===_td,isFuture=e.date>_td;
+  const e=DB.events.find(x=>x.id===route.id);const st=studentsForEvent(e),ld=leadersForEvent(e),status=eventStatus(e);const done=status.t==='Completed';const c=scount(e);const ls=leaderStat(e);const _td=new Date().toISOString().slice(0,10);const isToday=e.date===_td,isFuture=e.date>_td;const reportReady=evReportReady(e);
   const avatars=st.slice(0,8).map(s=>`<div class="avatar sm ${avColor(s.fn)}">${initials(s.fn,s.ln)}</div>`).join('')+(st.length>8?`<div class="avatar sm" style="background:var(--acc-soft);color:var(--a1)">+${st.length-8}</div>`:'');
   const rate=c.total?Math.round((c.present+c.late)/c.total*100):0;
   const attendedN=ls.filter(x=>x.attended).length;
@@ -921,9 +923,9 @@ function eventDetail(v){
       <div class="card"><div class="sectlabel" style="margin:0 0 10px">Students</div><div class="avstack">${avatars||'<span class="mini">No students assigned.</span>'}</div></div>
       ${needsSetup(e)?`<div class="banner warn">${ico('users')}<div><b>No students assigned yet.</b> Assign a batch or students before marking.</div></div><button class="btn primary" onclick="assignEvent('${e.id}')">${ico('users')} Assign people</button>`
         :isToday?`${status.t==='Draft'?`<div class="banner warn">${ico('clock')}<div><b>Attendance draft in progress.</b> Resume to continue; it auto-completes after today ends.</div></div>`:''}<button class="btn primary" onclick="openMark('${e.id}')">${ico('check')} ${status.t==='Draft'?'Resume marking':'Mark Attendance'}</button>`
-        :isFuture?`<div class="banner">${ico('lock')}<div>This event is <b>upcoming</b> — read-only. Attendance marking opens on the event day (${fmtDate(e.date)}).</div></div>`
+        :isFuture?`<div class="banner">${ico('clock')}<div>This event is <b>upcoming</b>. You can edit details and assign people now; attendance marking opens on the event day (${fmtDate(e.date)}).</div></div>${canEdit()?`<div class="selrow"><button class="btn subtle" style="flex:1" onclick="assignEvent('${e.id}')">${ico('users')} Assign</button><button class="btn ghost" style="flex:1" onclick="editEvent('${e.id}')">${ico('edit')} Edit details</button></div>`:''}`
         :`<div class="banner">${ico('lock')}<div>This event has passed with no attendance saved. You can record it from <b>More → Events → Mark</b>.</div></div>`}`}
-    <div class="selrow" style="margin-top:10px"><button class="btn ghost" style="flex:1" onclick="exportEventPDF('${e.id}')">${ico('dl')} PDF</button><button class="btn ghost" style="flex:1" onclick="exportEventCSV('${e.id}')">${ico('sheetx')} Excel</button><button class="btn subtle" style="flex:1" onclick="emailEventReport('${e.id}')">${ico('mail')} Email</button></div>
+    ${reportReady?`<div class="selrow" style="margin-top:10px"><button class="btn ghost" style="flex:1" onclick="exportEventPDF('${e.id}')">${ico('dl')} PDF</button><button class="btn ghost" style="flex:1" onclick="exportEventCSV('${e.id}')">${ico('sheetx')} Excel</button><button class="btn subtle" style="flex:1" onclick="emailEventReport('${e.id}')">${ico('mail')} Email</button></div>`:`<div class="selrow" style="margin-top:10px"><button class="btn rep-off" style="flex:1" disabled>${ico('dl')} PDF</button><button class="btn rep-off" style="flex:1" disabled>${ico('sheetx')} Excel</button><button class="btn rep-off" style="flex:1" disabled>${ico('mail')} Email</button></div><div class="mini" style="text-align:center;margin-top:6px;color:var(--muted)">Reports unlock after attendance is marked on the event day</div>`}
   </div>`;
 }
 
@@ -1641,15 +1643,15 @@ function toDMY(iso){const m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);r
 function fromDMY(s){s=String(s||'').trim();let m=s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);if(m)return m[3]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0');m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);if(m)return s;const p=new Date(s);return isNaN(p)?'':p.toISOString().slice(0,10);}
 function eventRows(e){const lbl=r=>({present:'Present',absent:'Absent',late:'Late'}[r]||'Unmarked');const mk=e.markedAt?fmtDT(e.markedAt):'';return peopleForEvent(e).map(p=>[e.name,toDMY(e.date),p.fn+' '+p.ln,p.role==='leader'?'Leader':'Student',p.cid||'',p.email||'',p.role==='leader'?'':batchName(p.batch),lbl(e.records[p.id]),mk]);}
 const CSV_HEAD=['Event','Date','Name','Role','Campus ID','Email','Batch','Status','Marked At'];
-function exportEventCSV(eid){const e=DB.events.find(x=>x.id===eid);const rows=[CSV_HEAD,...eventRows(e)];dl(`Attendance_${e.name.replace(/[^a-z0-9]+/gi,'_')}_${e.date}.csv`,rows.map(r=>r.map(csvEsc).join(',')).join('\n'),'text/csv');toast('Excel (CSV) exported');}
+function exportEventCSV(eid){const e=DB.events.find(x=>x.id===eid);if(!evReportReady(e)){toast('Report unlocks after attendance is marked');return;}const rows=[CSV_HEAD,...eventRows(e)];dl(`Attendance_${e.name.replace(/[^a-z0-9]+/gi,'_')}_${e.date}.csv`,rows.map(r=>r.map(csvEsc).join(',')).join('\n'),'text/csv');toast('Excel (CSV) exported');}
 function exportMonthCSV(){const evs=reportScopeEvents();if(!evs.length){toast('No events this month');return;}let rows=[CSV_HEAD];evs.forEach(e=>{rows=rows.concat(eventRows(e));});dl(`Attendance_${repFileLabel()}.csv`,rows.map(r=>r.map(csvEsc).join(',')).join('\n'),'text/csv');toast('Month Excel (CSV) exported');}
 function eventPdfBlock(doc,e,y){const c=scount(e);const lbl=r=>({present:'Present',absent:'Absent',late:'Late'}[r]||'Unmarked');if(y>250){doc.addPage();y=18;}doc.setFontSize(13);doc.setTextColor(30,34,51);doc.text(e.name,14,y);y+=6;doc.setFontSize(9);doc.setTextColor(120);doc.text(fmtDate(e.date)+' · '+fmtTime(e.start)+'-'+fmtTime(e.end)+'   Students — Present '+c.present+' · Late '+c.late+' · Absent '+c.absent,14,y);y+=6;if(e.markedAt){doc.setTextColor(150);doc.text('Attendance marked: '+fmtDT(e.markedAt)+(e.markedBy?' · by '+e.markedBy:''),14,y);y+=6;}doc.setTextColor(120);doc.setDrawColor(225);doc.line(14,y,196,y);y+=5;doc.setFontSize(9);studentsForEvent(e).forEach(p=>{if(y>285){doc.addPage();y=18;}const r=e.records[p.id];const col=r==='present'?[26,157,91]:r==='late'?[124,58,237]:r==='absent'?[208,36,47]:[120,120,120];doc.setTextColor(30,34,51);doc.text((p.fn+' '+p.ln).slice(0,32),16,y);doc.setTextColor(120);doc.text(((p.cid||'')+'  '+(p.email||'')).slice(0,46),90,y);doc.setTextColor(...col);doc.text(lbl(r),176,y);y+=6;});
   const ls=leaderStat(e);if(ls.length){if(y>278){doc.addPage();y=18;}doc.setTextColor(120);doc.setFontSize(8);doc.text('Leaders (not counted in stats): '+ls.map(x=>x.l.fn+' '+x.l.ln+' — '+x.label).join(', '),16,y,{maxWidth:180});y+=8;}
   return y+6;}
 function buildEventDoc(e){const {jsPDF}=window.jspdf;const doc=new jsPDF();doc.setFontSize(18);doc.setTextColor(208,36,47);doc.text('SPJ London — Attendance',14,18);eventPdfBlock(doc,e,30);doc.setTextColor(150);doc.setFontSize(8);doc.text('Generated by SPJ Attendance — on-device',14,292);return doc;}
 function buildMonthDoc(evs){const {jsPDF}=window.jspdf;const doc=new jsPDF();doc.setFontSize(18);doc.setTextColor(208,36,47);doc.text('SPJ London — '+repLabel(),14,18);let P=0,A=0,L=0;evs.forEach(e=>{const c=scount(e);P+=c.present;A+=c.absent;L+=c.late;});doc.setFontSize(10);doc.setTextColor(30,34,51);doc.text('Events: '+evs.length+'   Students — Present: '+P+'   Late: '+L+'   Absent: '+A,14,27);let y=36;evs.forEach(e=>{y=eventPdfBlock(doc,e,y);});doc.setTextColor(150);doc.setFontSize(8);doc.text('SPJ Attendance — on-device',14,292);return doc;}
-function exportEventPDF(eid){if(!pdfReady())return;const e=DB.events.find(x=>x.id===eid);shareOrDownload(buildEventDoc(e),`Attendance_${e.name.replace(/[^a-z0-9]+/gi,'_')}_${e.date}.pdf`,'Attendance',e.name);}
-function emailEventReport(eid){emailChooser('event',eid);}
+function exportEventPDF(eid){const e0=DB.events.find(x=>x.id===eid);if(!evReportReady(e0)){toast('Report unlocks after attendance is marked');return;}if(!pdfReady())return;const e=DB.events.find(x=>x.id===eid);shareOrDownload(buildEventDoc(e),`Attendance_${e.name.replace(/[^a-z0-9]+/gi,'_')}_${e.date}.pdf`,'Attendance',e.name);}
+function emailEventReport(eid){const e=DB.events.find(x=>x.id===eid);if(!evReportReady(e)){toast('Report unlocks after attendance is marked');return;}emailChooser('event',eid);}
 function exportMonthPDF(){if(!pdfReady())return;const evs=reportScopeEvents();if(!evs.length){toast('No events this month');return;}shareOrDownload(buildMonthDoc(evs),'Attendance_'+repFileLabel()+'.pdf','Attendance '+repLabel(),'Monthly attendance');}
 function emailMonthReport(){emailChooser('month');}
 
