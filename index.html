@@ -286,6 +286,18 @@ body{margin:0;padding:0;overflow:hidden;overscroll-behavior:none;background:var(
 .rep-pending{opacity:.55}
 .btn.rep-off{opacity:.5;cursor:not-allowed;background:#eef1f8;color:#8a90a6}
 .chip.lock{cursor:default;opacity:.9}
+.chip.mine{background:var(--present-bg);color:var(--present);border-color:var(--present)}
+.chip.mine:active{transform:scale(.97)}
+.chip.pre{background:#f4f5f9;color:var(--muted);cursor:default;opacity:.92}
+.chip.addable{background:var(--acc-soft);color:var(--a1);border-color:transparent}
+.chip .who{font-size:8.5px;font-weight:800;padding:1px 6px;border-radius:5px;margin-left:1px;letter-spacing:.4px}
+.chip.mine .who{background:var(--present);color:#fff}
+.chip.pre .who{background:#e5e8f1;color:#646c88}
+.chip .rmx{width:13px;height:13px;margin-left:1px;opacity:.85}
+.chip.addable .ic{width:14px;height:14px}
+.asec{font-size:11px;font-weight:800;letter-spacing:.5px;color:var(--muted);margin:16px 2px 9px;text-transform:uppercase;display:flex;align-items:center;gap:7px}
+.asec:first-child{margin-top:2px}
+.asec .cnt{background:var(--acc-soft);color:var(--a1);border-radius:999px;padding:1px 8px;font-size:10px;letter-spacing:0}
 .rsort{display:flex;gap:5px}
 .rsb{width:32px;height:30px;border:1px solid var(--line);background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);padding:0}
 .rsb .ic{width:16px;height:16px}
@@ -1353,11 +1365,27 @@ function saveEvent(id){const name=$('en').value.trim(),date=$('ed').value,start=
 
 /* ---- Assign people ---- */
 let assignTabState='batch', assignQ='';
-function assignEvent(id){const e0=DB.events.find(x=>x.id===id);if(!e0)return;if(!canEdit()&&!(isMarker()&&isToday(e0))){toast('Markers can add students to today’s events only');return;}const mk=isMarker();window._ae=id;assignTabState=mk?'stud':'batch';assignQ='';sheet(`<h3>${mk?'Add students':'Assign people'}</h3><div class="muted" id="aeName" style="margin-bottom:10px"></div>${mk?'':`<div class="tabbar"><button id="tb1" onclick="assignTab('batch')">Batches</button><button id="tb2" onclick="assignTab('stud')">Students</button><button id="tb3" onclick="assignTab('lead')">Leaders</button></div>`}<div class="searchbox">${ico('search')}<input class="search" id="aq" placeholder="Search..." oninput="assignQ=this.value;assignBody()"></div>${mk?`<div class="mini" style="margin:6px 2px 0;color:var(--muted)">Tap a student to add them. Only an admin can remove.</div>`:''}<div id="assignBody" style="margin-top:12px"></div><button class="btn primary" style="margin-top:16px" onclick="closeSheet();render()">Done</button>`);$('aeName').textContent=e0.name||'';assignTab(mk?'stud':'batch');}
+function assignEvent(id){const e0=DB.events.find(x=>x.id===id);if(!e0)return;if(!canEdit()&&!(isMarker()&&isToday(e0))){toast('Markers can add students to today’s events only');return;}const mk=isMarker();window._ae=id;assignTabState=mk?'stud':'batch';assignQ='';sheet(`<h3>${mk?'Add students':'Assign people'}</h3><div class="muted" id="aeName" style="margin-bottom:10px"></div>${mk?'':`<div class="tabbar"><button id="tb1" onclick="assignTab('batch')">Batches</button><button id="tb2" onclick="assignTab('stud')">Students</button><button id="tb3" onclick="assignTab('lead')">Leaders</button></div>`}<div class="searchbox">${ico('search')}<input class="search" id="aq" placeholder="Search..." oninput="assignQ=this.value;assignBody()"></div>${mk?`<div class="mini" style="margin:6px 2px 0;color:var(--muted)"><b style="color:var(--present)">Green (YOU)</b> = you added them — tap to remove. <b>Grey (PRE)</b> = pre-assigned by batch/admin (locked). Tap ${ico('plus')} under <b>Add students</b> to enroll.</div>`:''}<div id="assignBody" style="margin-top:12px"></div><button class="btn primary" style="margin-top:16px" onclick="closeSheet();render()">Done</button>`);$('aeName').textContent=e0.name||'';assignTab(mk?'stud':'batch');}
 function assignTab(t){assignTabState=t;assignQ='';const el=$('aq');if(el)el.value='';['tb1','tb2','tb3'].forEach((x,i)=>$(x).classList.toggle('on',['batch','stud','lead'][i]===t));assignBody();}
 function assignBody(){const e=DB.events.find(x=>x.id===window._ae),b=$('assignBody'),q=assignQ.toLowerCase();
   if(assignTabState==='batch'){const items=sortNm(DB.batches.filter(x=>!x.archived&&x.name.toLowerCase().includes(q)));b.innerHTML=selAllBtn(items.map(x=>x.id),'batches')+items.map(x=>`<span class="chip ${e.batches.includes(x.id)?'on':''}" onclick="toggleAssign('batches','${x.id}','${esc(x.name)}')">${esc(x.name)} · ${DB.students.filter(s=>s.batch===x.id&&!s.archived).length}</span>`).join('')+`<div class="mini" style="margin-top:8px">Assigning a batch includes <b>all its students</b> automatically.</div>`;}
-  else if(assignTabState==='stud'){const me=(SESSION&&SESSION.u)||'';const items=sortP(DB.students.filter(s=>!s.archived&&(s.fn+' '+s.ln+' '+(s.cid||'')).toLowerCase().includes(q)));b.innerHTML=selAllBtn(items.map(x=>x.id),'students')+items.map(s=>{const inArr=e.students.includes(s.id);const viaBatch=e.batches.includes(s.batch);const ex=(e.exclude||[]).includes(s.id);const on=(inArr||viaBatch)&&!ex;const mineAdd=inArr&&((e.manualBy||{})[s.id]===me);const canRem=on&&(canRemoveStudents()||mineAdd);const lock=on&&!canRem;return `<span class="chip ${on?'on':''}${lock?' lock':''}" ${lock?'':`onclick="toggleAssign('students','${s.id}','${esc(s.fn+' '+s.ln)}')"`}>${esc(s.fn)} ${esc(s.ln)}${viaBatch?' · via batch':''}${ex?' · removed':''}${lock?' '+ico('check'):''}</span>`;}).join('')||'<div class="mini">No students match.</div>';}
+  else if(assignTabState==='stud'){const me=(SESSION&&SESSION.u)||'';const inSrch=s=>(s.fn+' '+s.ln+' '+(s.cid||'')).toLowerCase().includes(q);
+    if(isMarker()){
+      const roster=studentsForEvent(e);const rosterIds=new Set(roster.map(s=>s.id));
+      const isMine=s=>e.students.includes(s.id)&&((e.manualBy||{})[s.id]===me);
+      const enr=sortP(roster.filter(inSrch));const mine=enr.filter(isMine),pre=enr.filter(s=>!isMine(s));
+      const add=sortP(DB.students.filter(s=>!s.archived&&!rosterIds.has(s.id)&&inSrch(s)));
+      let h=`<div class="asec">Enrolled <span class="cnt">${roster.length}</span></div>`;
+      if(!mine.length&&!pre.length)h+='<div class="mini" style="margin-bottom:4px">No one enrolled yet — add students below.</div>';
+      h+=mine.map(s=>`<span class="chip mine" onclick="toggleAssign('students','${s.id}','${esc(s.fn+' '+s.ln)}')">${esc(s.fn)} ${esc(s.ln)} <span class="who">YOU</span>${ico('x','rmx')}</span>`).join('');
+      h+=pre.map(s=>`<span class="chip pre lock">${esc(s.fn)} ${esc(s.ln)} <span class="who">PRE</span></span>`).join('');
+      h+=`<div class="asec">Add students${add.length?` <span class="cnt">${add.length}</span>`:''}</div>`;
+      h+=add.length?add.map(s=>`<span class="chip addable" onclick="toggleAssign('students','${s.id}','${esc(s.fn+' '+s.ln)}')">${ico('plus')} ${esc(s.fn)} ${esc(s.ln)}</span>`).join(''):`<div class="mini">${q?'No students match.':'Everyone is already enrolled.'}</div>`;
+      b.innerHTML=h;
+    } else {
+      const items=sortP(DB.students.filter(s=>!s.archived&&inSrch(s)));b.innerHTML=selAllBtn(items.map(x=>x.id),'students')+items.map(s=>{const inArr=e.students.includes(s.id);const viaBatch=e.batches.includes(s.batch);const ex=(e.exclude||[]).includes(s.id);const on=(inArr||viaBatch)&&!ex;return `<span class="chip ${on?'on':''}" onclick="toggleAssign('students','${s.id}','${esc(s.fn+' '+s.ln)}')">${esc(s.fn)} ${esc(s.ln)}${viaBatch?' · via batch':''}${ex?' · removed':''}</span>`;}).join('')||'<div class="mini">No students match.</div>';
+    }
+  }
   else{const items=sortP(DB.staff.filter(s=>(s.fn+' '+s.ln).toLowerCase().includes(q)));b.innerHTML=selAllBtn(items.map(x=>x.id),'leaders')+items.map(s=>`<span class="chip ${e.leaders.includes(s.id)?'on':''}" onclick="toggleAssign('leaders','${s.id}','${esc(s.fn+' '+s.ln)}')">${esc(s.fn)} ${esc(s.ln)}</span>`).join('')||'<div class="mini">No staff match.</div>';}}
 function selAllBtn(ids,field){if(!ids.length||!canRemoveStudents())return '';const e=DB.events.find(x=>x.id===window._ae);const all=ids.every(i=>e[field].includes(i));return `<button class="btn sm ghost" style="margin-bottom:10px" onclick="selectAllVisible('${field}',${JSON.stringify(ids).replace(/"/g,'&quot;')})">${all?'Unselect all visible':'Select all visible ('+ids.length+')'}</button>`;}
 function selectAllVisible(field,ids){if(isMarker()&&field!=='students'){toast('Add students only');return;}const e=DB.events.find(x=>x.id===window._ae);const all=ids.every(i=>e[field].includes(i));if(all&&!canRemoveStudents()){toast('Only an admin can remove people');return;}if(all)e[field]=e[field].filter(i=>!ids.includes(i));else ids.forEach(i=>{if(!e[field].includes(i))e[field].push(i);});save();assignBody();toast(all?'Cleared visible':'Added visible');}
