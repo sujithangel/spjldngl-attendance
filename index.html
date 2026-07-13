@@ -792,7 +792,7 @@ function render(){
   else if(route.tab==='reports'){route.sub==='export'?exportView(v):reportsView(v);}
   else if(route.tab==='more')moreView(v);
   const _pk=route.tab+'|'+(route.sub||'')+'|'+(route.id||'')+'|'+(route.mode||'');
-  if(_pk!==_lastPage){_lastPage=_pk;animatePage(v);}
+  if(_pk!==_lastPage){_lastPage=_pk;if(route.tab==='dashboard')animatePage(v);}
   window.scrollTo(0,0);
 }
 function renderNav(){const tabs=isMarker()?[['dashboard','grid','Home']]:[['dashboard','grid','Home'],['calendar','cal','Events'],['reports','doc','Reports'],['more','more','More']];$('nav').innerHTML=tabs.map(([t,i,l])=>`<button class="${route.tab===t?'active':''}" onclick="go('${t}')">${ico(i)}${l}</button>`).join('');}
