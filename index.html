@@ -286,6 +286,10 @@ body{margin:0;padding:0;overflow:hidden;overscroll-behavior:none;background:var(
 .rep-pending{opacity:.55}
 .btn.rep-off{opacity:.5;cursor:not-allowed;background:#eef1f8;color:#8a90a6}
 .chip.lock{cursor:default;opacity:.9}
+.rsort{display:flex;gap:5px}
+.rsb{width:32px;height:30px;border:1px solid var(--line);background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);padding:0}
+.rsb .ic{width:16px;height:16px}
+.rsb.on{border-color:currentColor;background:#f4f5f9;box-shadow:inset 0 0 0 1px currentColor}
 .chip.lock .ic{width:12px;height:12px;vertical-align:-1px;margin-left:3px}
 .rep-badge{font-size:9px;font-weight:800;padding:2px 7px;border-radius:6px;vertical-align:middle;display:inline-flex;align-items:center;gap:3px}
 .rep-badge.done{background:#e5f6ed;color:#0f6e56}
@@ -387,6 +391,16 @@ body{margin:0;padding:0;overflow:hidden;overscroll-behavior:none;background:var(
 .fab .ic{width:28px;height:28px;color:#fff;}
 .nav{flex:0 0 auto;width:100%;background:#fff;border-top:1px solid var(--line);display:flex;z-index:40;padding:8px 0 calc(12px + env(safe-area-inset-bottom));}
 .nav button{flex:1;background:none;border:none;color:var(--dim);font-size:11px;font-weight:700;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;}
+@media(min-width:900px){
+  body.authed #app{display:grid;grid-template-columns:236px minmax(0,1fr);grid-template-rows:auto 1fr;grid-template-areas:"nav header" "nav view";max-width:1200px;margin:0 auto;border-left:1px solid var(--line);border-right:1px solid var(--line);}
+  body.authed #header{grid-area:header;}
+  body.authed #view{grid-area:view;}
+  body.authed .nav{grid-area:nav;flex-direction:column;align-items:stretch;justify-content:flex-start;border-top:none;border-right:1px solid var(--line);padding:16px 12px;gap:6px;overflow-y:auto;}
+  body.authed .nav button{flex:0 0 auto;flex-direction:row;justify-content:flex-start;gap:12px;padding:12px 14px;border-radius:12px;font-size:14.5px;color:var(--muted);}
+  body.authed .nav button .ic{width:22px;height:22px;}
+  body.authed .nav button.active{color:var(--a1);background:var(--acc-soft);}
+  body.authed #view>*{max-width:940px;margin-left:auto;margin-right:auto;}
+}
 .nav button.active{color:var(--a1);}
 .nav button .ic{width:22px;height:22px;}
 .evhead{background:var(--a1);color:#fff;border-radius:22px;padding:22px;position:relative;overflow:hidden;box-shadow:0 3px 12px rgba(26,32,54,.08);}
@@ -742,9 +756,9 @@ function rrpBody(){const b=$('rrpBody');if(!b)return;const h=$('rrpHint');if(h)h
 function rrpPick(m){if(_rrp.step==='from'){_rrp.fm=m;_rrp.fy=_rrp.year;_rrp.step='to';if(_rrp.year<_rrp.fy)_rrp.year=_rrp.fy;_rrp.bundle=_rrp.year-(_rrp.year%12);_rrp.mode='month';rrpBody();}else{if(new Date(_rrp.fy,_rrp.fm)>new Date(_rrp.year,m)){toast('End must be on/after start');return;}repRange={fy:_rrp.fy,fm:_rrp.fm,ty:_rrp.year,tm:m};closeSheet();render();}}
 function render(){
   if(SESSION&&Date.now()>SESSION.exp){endSession();}
-  if(!SESSION){$('nav').style.display='none';$('header').innerHTML='';$('fab').style.display='none';$('view').style.paddingBottom='0';loginView($('view'));return;}
+  if(!SESSION){document.body.classList.remove('authed');$('nav').style.display='none';$('header').innerHTML='';$('fab').style.display='none';$('view').style.paddingBottom='0';loginView($('view'));return;}
   if(isMarker()&&(route.tab==='reports'||route.tab==='more'||(route.tab==='calendar'&&!route.id)))route={tab:'dashboard',sub:null,id:null,mode:null};
-  $('view').style.paddingBottom='';$('nav').style.display='';renderHeader();renderNav();const v=$('view');$('fab').style.display='none';
+  document.body.classList.add('authed');$('view').style.paddingBottom='';$('nav').style.display='';renderHeader();renderNav();const v=$('view');$('fab').style.display='none';
   if(route.tab==='calendar'){route.id?(route.mode==='mark'?markView(v):eventDetail(v)):calendarView(v);}
   else if(route.tab==='dashboard')dashboardView(v);
   else if(route.tab==='reports'){route.sub==='export'?exportView(v):reportsView(v);}
@@ -923,6 +937,8 @@ function calendarView(v){
 }
 
 /* ================= EVENT DETAIL ================= */
+let rosterSort='name';
+function sortRoster(arr,e){const nm=p=>((p.fn||'')+' '+(p.ln||'')).toLowerCase();if(rosterSort==='name')return arr.slice().sort((a,b)=>nm(a).localeCompare(nm(b)));const tgt={pres:'present',abs:'absent',late:'late'}[rosterSort];return arr.slice().sort((a,b)=>{const ra=(e.records[a.id]===tgt)?0:1,rb=(e.records[b.id]===tgt)?0:1;return ra-rb||nm(a).localeCompare(nm(b));});}
 function eventDetail(v){
   const e=DB.events.find(x=>x.id===route.id);const st=studentsForEvent(e),ld=leadersForEvent(e),status=eventStatus(e);const done=status.t==='Completed';const c=scount(e);const ls=leaderStat(e);const _td=new Date().toISOString().slice(0,10);const isToday=e.date===_td,isFuture=e.date>_td;const reportReady=evReportReady(e);
   const avatars=st.slice(0,8).map(s=>`<div class="avatar sm ${avColor(s.fn)}">${initials(s.fn,s.ln)}</div>`).join('')+(st.length>8?`<div class="avatar sm" style="background:var(--acc-soft);color:var(--a1)">+${st.length-8}</div>`:'');
@@ -932,7 +948,7 @@ function eventDetail(v){
     ${e.markedAt?`<div class="mini" style="margin:0 2px 10px">${ico('clock')} Attendance marked: <b>${fmtDT(e.markedAt)}</b>${e.markedBy?' · by '+esc(e.markedBy):''}</div>`:''}
     <div class="card darkcard"><div style="font-weight:800;margin-bottom:6px">Student Attendance</div><div style="font-size:34px;font-weight:800">${rate}%<span style="font-size:13px;opacity:.7;font-weight:600"> present+late</span></div>
       <div class="row" style="gap:8px;margin-top:12px"><div class="stat" style="flex:1;background:rgba(255,255,255,.08);border:none;color:#fff"><div class="n" style="color:#4ade80">${c.present}</div><div class="l" style="color:rgba(255,255,255,.7)">Present</div></div><div class="stat" style="flex:1;background:rgba(255,255,255,.08);border:none;color:#fff"><div class="n" style="color:#ff6b74">${c.absent}</div><div class="l" style="color:rgba(255,255,255,.7)">Absent</div></div><div class="stat" style="flex:1;background:rgba(255,255,255,.08);border:none;color:#fff"><div class="n" style="color:#c4b5fd">${c.late}</div><div class="l" style="color:rgba(255,255,255,.7)">Late</div></div></div></div>
-    <div class="card"><div class="sectlabel" style="margin:0 0 8px">Student Roster (${st.length})</div>${st.map(p=>{const r=e.records[p.id];const col=r==='present'?'var(--present)':r==='absent'?'var(--absent)':r==='late'?'var(--late)':'var(--dim)';return `<div class="rowline"><div class="avatar sm ${avColor(p.fn)}">${initials(p.fn,p.ln)}</div><div class="grow"><div style="font-weight:700;font-size:14px">${esc(p.fn)} ${esc(p.ln)}</div><div class="mini">${esc((p.cid||'')+' · '+batchName(p.batch))}</div></div><span style="color:${col};font-weight:800;font-size:12px">${(r||'—').toUpperCase()}</span></div>`;}).join('')}</div>
+    <div class="card"><div class="row" style="align-items:center;justify-content:space-between;margin:0 0 8px"><div class="sectlabel" style="margin:0">Student Roster (${st.length})</div><div class="rsort"><button class="rsb ${rosterSort==='name'?'on':''}" aria-label="Sort by name" title="Name A–Z" onclick="rosterSort='name';render()">${ico('sort')}</button><button class="rsb ${rosterSort==='pres'?'on':''}" style="color:var(--present)" aria-label="Present first" title="Present first" onclick="rosterSort='pres';render()">${ico('check')}</button><button class="rsb ${rosterSort==='late'?'on':''}" style="color:var(--late)" aria-label="Late first" title="Late first" onclick="rosterSort='late';render()">${ico('clock')}</button><button class="rsb ${rosterSort==='abs'?'on':''}" style="color:var(--absent)" aria-label="Absent first" title="Absent first" onclick="rosterSort='abs';render()">${ico('x')}</button></div></div>${sortRoster(st,e).map(p=>{const r=e.records[p.id];const col=r==='present'?'var(--present)':r==='absent'?'var(--absent)':r==='late'?'var(--late)':'var(--dim)';return `<div class="rowline"><div class="avatar sm ${avColor(p.fn)}">${initials(p.fn,p.ln)}</div><div class="grow"><div style="font-weight:700;font-size:14px">${esc(p.fn)} ${esc(p.ln)}</div><div class="mini">${esc((p.cid||'')+' · '+batchName(p.batch))}</div></div><span style="color:${col};font-weight:800;font-size:12px">${(r||'—').toUpperCase()}</span></div>`;}).join('')}</div>
     ${ls.length?`<details class="card"><summary style="font-weight:800;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between">Leaders — ${attendedN}/${ls.length} attended <span class="mini" style="font-weight:600">not counted in stats ${ico('chev')}</span></summary><div style="margin-top:8px">${ls.map(x=>{const col=x.attended?'var(--present)':'var(--absent)';return `<div class="rowline"><div class="avatar sm lead">${initials(x.l.fn,x.l.ln)}</div><div class="grow"><div style="font-weight:700;font-size:14px">${esc(x.l.fn)} ${esc(x.l.ln)}</div><div class="mini">Leader</div></div><span style="color:${col};font-weight:800;font-size:12px">${x.label.toUpperCase()}</span></div>`;}).join('')}</div></details>`:''}
     <div class="banner">${ico('lock')}<div>This event is <b>completed and locked</b>. To correct attendance, go to <b>More → Events → Edit attendance</b>.</div></div>`:'';
   v.innerHTML=`<div class="wrap">
