@@ -583,6 +583,13 @@ button.tpick .ic{color:var(--dim);flex:0 0 auto;width:18px;height:18px}
 .scanstatus.ok{background:#1a9d5bee}.scanstatus.warn{background:#d97706f2}.scanstatus.err{background:#D0242Fee}
 .scanact{position:absolute;left:18px;right:18px;bottom:34px;display:flex;flex-direction:column;z-index:2}
 .scanact .btn{margin:0}
+.scanpanel{position:relative;width:100%;aspect-ratio:4/3;min-height:230px;max-height:48vh;border-radius:14px;overflow:hidden;background:#000;margin:0 0 10px;border:1px solid var(--line)}
+.scanpanel #scanvid{width:100%;height:100%;object-fit:cover;display:block}
+.scanpanel .scanline{position:absolute;top:50%;left:50%;width:62%;height:62%;transform:translate(-50%,-50%);border:2px solid #fff;border-radius:12px;box-shadow:0 0 0 100vmax rgba(0,0,0,.28)}
+.scanpanel .scanstatus{position:absolute;left:8px;right:8px;bottom:8px;top:auto;text-align:center;color:#fff;font-size:12.5px;background:#000b;padding:7px 9px;border-radius:9px;z-index:2}
+.scanpanel .scanstatus.ok{background:#1a9d5bee}.scanpanel .scanstatus.warn{background:#d97706f2}.scanpanel .scanstatus.err{background:#D0242Fee}
+.scanpanel .scanact{position:absolute;left:10px;right:10px;bottom:46px;top:auto;display:flex;flex-direction:column;gap:6px;z-index:2}
+.scanpanel .scanact .btn{margin:0}
 @keyframes up{from{transform:translateY(100%)}}
 .sheet h3{margin:0 0 4px;font-size:19px;font-weight:800}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:9px 13px;border-radius:999px;background:var(--acc-soft);color:var(--a1);font-size:13px;font-weight:600;margin:0 6px 8px 0;cursor:pointer;border:1.5px solid transparent}
@@ -862,7 +869,7 @@ function render(){
   if(SESSION&&Date.now()>SESSION.exp){endSession();}
   if(!SESSION){document.body.classList.remove('authed');$('nav').style.display='none';$('header').innerHTML='';$('fab').style.display='none';$('view').style.paddingBottom='0';loginView($('view'));return;}
   if(isMarker()&&(route.tab==='reports'||route.tab==='more'||(route.tab==='calendar'&&!route.id)))route={tab:'dashboard',sub:null,id:null,mode:null};
-  if(!(route.tab==='calendar'&&route.id&&route.mode==='mark'))fbAttendUnsub();
+  if(!(route.tab==='calendar'&&route.id&&route.mode==='mark')){fbAttendUnsub();if(typeof scanCleanup==='function')scanCleanup();}
   document.body.classList.add('authed');$('view').style.paddingBottom='';$('nav').style.display='';renderHeader();renderNav();const v=$('view');$('fab').style.display='none';
   if(route.tab==='calendar'){route.id?(route.mode==='mark'?markView(v):eventDetail(v)):calendarView(v);}
   else if(route.tab==='dashboard')dashboardView(v);
@@ -1091,15 +1098,17 @@ function openChooser(eid,pid){const e=DB.events.find(x=>x.id===eid);const p=[...
    <div class="mini" style="text-align:center;margin-top:12px">Tap anywhere outside to cancel</div>`);}
 function markRefresh(e){const c=countMarks(e);['cAll','cPres','cAbs','cLate'].forEach((id,i)=>{const el=$(id);if(el)el.textContent=[c.total,c.present,c.absent,c.late][i];});const un=$('unmarkedN');if(un)un.textContent=c.un;
   document.querySelectorAll('[data-pid]').forEach(row=>{const pid=row.dataset.pid,r=e.records[pid];row.className='mrow'+(r?' '+r:'');const b=row.querySelector('.statusbtn');b.className='statusbtn'+(r?' '+r:'');b.innerHTML=r==='present'?ICO.check:r==='absent'?ICO.x:r==='late'?ICO.clock:ICO.dash;const stx=row.querySelector('.stx');const col=r==='present'?'var(--present)':r==='absent'?'var(--absent)':r==='late'?'var(--late)':'var(--dim)';stx.textContent=r?' · '+r.toUpperCase():'';stx.style.color=col;row.style.display=(markFilter==='all'||markFilter===r)&&(!markQuery||row.dataset.name.includes(markQuery.toLowerCase()))?'':'none';});}
-function markView(v){const e=DB.events.find(x=>x.id===route.id);const _t=new Date().toISOString().slice(0,10);if(e.date>_t&&e.status!=='completed'){toast('Attendance opens on the event day');go('calendar',null,e.id);return;}if(isMarker()&&e.date!==_t){toast('You can only mark today’s events');go('calendar',null,e.id);return;}if(markNotStarted(e)){toast('Marking opens at '+fmtTime(e.start));go('calendar',null,e.id);return;}const ld=sortP(leadersForEvent(e)),st=sortP(studentsForEvent(e));
-  const person=(p,isLead)=>{const sub=isLead?'Leader':`${esc(p.cid||'—')} · ${esc(batchName(p.batch))}`;return `<div class="mrow" data-pid="${p.id}" data-name="${esc((p.fn+' '+p.ln+' '+(p.cid||'')).toLowerCase())}" onclick="tapMark('${e.id}','${p.id}')"><div class="avatar sm${isLead?' lead':' '+avColor(p.fn)}">${initials(p.fn,p.ln)}</div><div class="grow"><div class="nm">${esc(p.fn)} ${esc(p.ln)}${isLead?' <span class="pill orange" style="padding:1px 7px;font-size:9px">LEADER</span>':''}</div><div class="m2">${sub}<span class="stx"></span></div></div><button class="statusbtn" onclick="event.stopPropagation();tapMark('${e.id}','${p.id}')">${ICO.dash}</button></div>`;};
+function markPersonRow(e,p,isLead){const sub=isLead?'Leader':`${esc(p.cid||'—')} · ${esc(batchName(p.batch))}`;return `<div class="mrow" data-pid="${p.id}" data-name="${esc((p.fn+' '+p.ln+' '+(p.cid||'')).toLowerCase())}" onclick="tapMark('${e.id}','${p.id}')"><div class="avatar sm${isLead?' lead':' '+avColor(p.fn)}">${initials(p.fn,p.ln)}</div><div class="grow"><div class="nm">${esc(p.fn)} ${esc(p.ln)}${isLead?' <span class="pill orange" style="padding:1px 7px;font-size:9px">LEADER</span>':''}</div><div class="m2">${sub}<span class="stx"></span></div></div><button class="statusbtn" onclick="event.stopPropagation();tapMark('${e.id}','${p.id}')">${ICO.dash}</button></div>`;}
+function markRosterHTML(e){const ld=sortP(leadersForEvent(e)),st=sortP(studentsForEvent(e));return (ld.length?'<div class="sectlabel" style="margin:6px 0 6px">Leaders</div>'+ld.map(p=>markPersonRow(e,p,true)).join(''):'')+(st.length?'<div class="sectlabel" style="margin:10px 0 6px">Students</div>'+st.map(p=>markPersonRow(e,p,false)).join(''):'<div class="empty">'+ico('users')+'<div>No students assigned.</div></div>');}
+function markView(v){const e=DB.events.find(x=>x.id===route.id);const _t=new Date().toISOString().slice(0,10);if(e.date>_t&&e.status!=='completed'){toast('Attendance opens on the event day');go('calendar',null,e.id);return;}if(isMarker()&&e.date!==_t){toast('You can only mark today’s events');go('calendar',null,e.id);return;}if(markNotStarted(e)){toast('Marking opens at '+fmtTime(e.start));go('calendar',null,e.id);return;}scanCleanup();
   const _ms=eventStatus(e);
-  v.innerHTML=`<div class="wrap"><div class="card" style="padding:12px 14px;margin-bottom:10px"><div class="row" style="align-items:flex-start;gap:8px"><div class="grow"><div class="title" style="font-size:15.5px">${esc(e.name)}</div><div class="mini" style="margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;align-items:center"><span>${ico('cal')} ${fmtDate(e.date)}</span><span>${ico('clock')} ${fmtTime(e.start)}–${fmtTime(e.end)}</span>${e.batches.length?`<span>${ico('cap')} ${esc(e.batches.map(batchName).join(', '))}</span>`:''}</div></div><span class="pill ${_ms.c}${_ms.t==='In progress'?' live':''}" style="padding:2px 9px;font-size:9px">${_ms.t.toUpperCase()}</span></div></div><div class="row" style="gap:8px;margin-bottom:2px"><div class="searchbox" style="flex:1;margin:0">${ico('search')}<input class="search" value="${esc(markQuery)}" placeholder="Search name or campus ID..." oninput="markQuery=this.value;markRefresh(DB.events.find(x=>x.id==='${e.id}'))"></div><button class="editbtn" title="Sort ${nameSort==='az'?'A→Z':'Z→A'}" onclick="toggleSort()">${ico('sort')}</button><button class="editbtn" title="Manage students" onclick="assignEvent('${e.id}')">${ico('users')}</button></div>
-    <button class="btn primary" style="margin:4px 0 8px" onclick="scanEvent('${e.id}')">${ico('scan')} Scan QR to mark present</button>
+  v.innerHTML=`<div class="wrap"><div class="card" style="padding:12px 14px;margin-bottom:10px"><div class="row" style="align-items:flex-start;gap:8px"><div class="grow"><div class="title" style="font-size:15.5px">${esc(e.name)}</div><div class="mini" style="margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;align-items:center"><span>${ico('cal')} ${fmtDate(e.date)}</span><span>${ico('clock')} ${fmtTime(e.start)}–${fmtTime(e.end)}</span>${e.batches.length?`<span>${ico('cap')} ${esc(e.batches.map(batchName).join(', '))}</span>`:''}</div></div><span class="pill ${_ms.c}${_ms.t==='In progress'?' live':''}" style="padding:2px 9px;font-size:9px">${_ms.t.toUpperCase()}</span></div></div>
+    <button class="btn primary" id="scanToggleBtn" style="margin:0 0 8px" onclick="scanEvent('${e.id}')">${ico('scan')} Scan QR to mark present</button>
+    <div id="scanPanel" class="scanpanel" style="display:none"><video id="scanvid" playsinline autoplay muted></video><div class="scanline"></div><div class="scanstatus" id="scanStatus">Point the camera at a student’s QR code…</div><div class="scanact" id="scanAct"></div></div>
+    <div class="row" style="gap:8px;margin-bottom:2px"><div class="searchbox" style="flex:1;margin:0">${ico('search')}<input class="search" value="${esc(markQuery)}" placeholder="Search name or campus ID..." oninput="markQuery=this.value;markRefresh(DB.events.find(x=>x.id==='${e.id}'))"></div><button class="editbtn" title="Sort ${nameSort==='az'?'A→Z':'Z→A'}" onclick="toggleSort()">${ico('sort')}</button><button class="editbtn" title="Manage students" onclick="assignEvent('${e.id}')">${ico('users')}</button></div>
     <div class="ftabs"><button class="ftab on" id="fAll" onclick="setFilter('all')"><span class="c" id="cAll">0</span>All</button><button class="ftab" id="fpresent" onclick="setFilter('present')"><span class="c" id="cPres">0</span>Present</button><button class="ftab" id="fabsent" onclick="setFilter('absent')"><span class="c" id="cAbs">0</span>Absent</button><button class="ftab" id="flate" onclick="setFilter('late')"><span class="c" id="cLate">0</span>Late</button></div>
-    <div class="mini" style="text-align:center;margin:2px 0 10px">Tap a row: Present → Late → Absent · <b style="color:var(--a1)">auto-saved</b></div>
-    ${ld.length?'<div class="sectlabel" style="margin:6px 0 6px">Leaders</div>'+ld.map(p=>person(p,true)).join(''):''}
-    ${st.length?'<div class="sectlabel" style="margin:10px 0 6px">Students</div>'+st.map(p=>person(p,false)).join(''):'<div class="empty">'+ico('users')+'<div>No students assigned.</div></div>'}
+    <div class="mini" style="text-align:center;margin:2px 0 10px">Tap a row: Present → Late → Absent · <b style="color:var(--a1)">auto-saved</b> · or Scan QR above</div>
+    <div id="markRoster">${markRosterHTML(e)}</div>
     <div class="legend"><span style="color:var(--present)"><span class="dot"></span>Present</span><span style="color:var(--absent)"><span class="dot"></span>Absent</span><span style="color:var(--late)"><span class="dot"></span>Late</span></div>
     <div class="card" style="padding:10px 12px;display:flex;align-items:center;gap:8px"><div class="grow" style="font-size:13px;font-weight:700"><span id="unmarkedN">0</span> not marked</div><button class="btn sm subtle" onclick="markRemaining('${e.id}','present')">All present</button><button class="btn sm ghost" onclick="markRemaining('${e.id}','absent')">All absent</button></div>
     <div class="mini" style="text-align:center;margin:0 0 8px">${canEdit()?'<b>Draft</b> keeps your marks to resume later. <b>Save</b> completes it (unmarked → Absent).':'Your marks are auto-saved as a <b>draft</b>. An admin completes it, or it completes automatically after the day ends.'}</div>
@@ -1930,24 +1939,22 @@ function studentQRSheet(id){const s=DB.students.find(x=>x.id===id);if(!s)return;
 function exportOneStudentQR(id){const s=DB.students.find(x=>x.id===id);if(!s||!qrReady())return;if(!pdfReady())return;const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',format:[70,90]});doc.setFontSize(11);doc.setTextColor(30,34,51);doc.text((s.fn+' '+s.ln).slice(0,28),35,12,{align:'center'});doc.setFontSize(9);doc.setTextColor(120);doc.text((s.cid||'')+'  ·  '+batchName(s.batch),35,18,{align:'center'});const u=qrDataURL(studentQRText(s),8);doc.addImage(u,'PNG',12.5,24,45,45);doc.setFontSize(7);doc.setTextColor(150);doc.text('SPJ London — Attendance',35,80,{align:'center'});shareOrDownload(doc,'QR_'+(s.fn+'_'+s.ln).replace(/[^a-z0-9]+/gi,'_')+'.pdf','Student QR',s.fn+' '+s.ln);}
 function exportStudentQRs(){if(!qrReady()){toast('Connect to the internet once to generate QR codes');return;}if(!pdfReady())return;const list=sortP(DB.students.filter(s=>!s.archived));if(!list.length){toast('No students');return;}const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',format:'a4'});const cols=3,rows=4,mL=12,mT=16,cw=(210-2*mL)/cols,ch=(297-mT-12)/rows;doc.setFontSize(14);doc.setTextColor(208,36,47);doc.text('SPJ London — Attendance QR codes',105,10,{align:'center'});let i=0;list.forEach(s=>{const pos=i%(cols*rows);if(i>0&&pos===0){doc.addPage();doc.setFontSize(14);doc.setTextColor(208,36,47);doc.text('SPJ London — Attendance QR codes',105,10,{align:'center'});}const c=pos%cols,r=Math.floor(pos/cols);const x=mL+c*cw,y=mT+r*ch;const qs=Math.min(cw,ch)-20;const u=qrDataURL(studentQRText(s),6);doc.addImage(u,'PNG',x+(cw-qs)/2,y+2,qs,qs);doc.setFontSize(9);doc.setTextColor(30,34,51);doc.text((s.fn+' '+s.ln).slice(0,26),x+cw/2,y+qs+8,{align:'center'});doc.setFontSize(8);doc.setTextColor(120);doc.text((s.cid||''),x+cw/2,y+qs+13,{align:'center'});i++;});shareOrDownload(doc,'Attendance_QR_codes.pdf','QR codes','All students');}
 
-/* ================= QR SCANNER ================= */
-let _scanEid=null,_scanStream=null,_scanRAF=null,_scanDet=null,_scanPaused=false,_scanLast={c:'',t:0},_scanCanvas=null;
+/* ================= QR SCANNER (inline, live) ================= */
+let _scanEid=null,_scanStream=null,_scanRAF=null,_scanDet=null,_scanPaused=false,_scanLast={c:'',t:0},_scanCanvas=null,scanOn=false;
 function scanSupported(){return !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);}
-async function scanEvent(eid){const e=DB.events.find(x=>x.id===eid);if(!e){return;}
+function scanEvent(eid){if(scanOn){scanStop();return;}startInlineScan(eid);}
+async function startInlineScan(eid){const e=DB.events.find(x=>x.id===eid);if(!e)return;
   if(!scanSupported()){toast('Camera not available on this device/browser');return;}
-  _scanEid=eid;_scanPaused=false;_scanLast={c:'',t:0};
-  let m=document.getElementById('scanmodal');if(!m){m=document.createElement('div');m.id='scanmodal';document.body.appendChild(m);}
-  m.className='scanmodal';m.innerHTML=`<div class="scanwrap"><video id="scanvid" playsinline autoplay muted></video><div class="scanframe"></div>
-    <div class="scanbar"><div class="grow"><b>Scan attendance QR</b><div class="mini" style="color:#cbd2e6">${esc(e.name)}</div></div><button class="scanx" onclick="scanStop()">${ico('x')}</button></div>
-    <div class="scanstatus" id="scanStatus">Point the camera at a student’s QR code…</div>
-    <div class="scanact" id="scanAct"></div></div>`;
-  m.style.display='flex';
+  const panel=document.getElementById('scanPanel');if(!panel)return;
+  _scanEid=eid;_scanPaused=false;_scanLast={c:'',t:0};scanOn=true;
+  panel.style.display='block';const btn=document.getElementById('scanToggleBtn');if(btn){btn.innerHTML=ico('x')+' Stop scanning';btn.classList.add('danger');}
+  scanSetStatus('Starting camera…');
   try{_scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});}
   catch(err){scanSetStatus('Camera permission denied. Allow camera access and try again.','err');return;}
   const v=document.getElementById('scanvid');if(!v){return;}v.srcObject=_scanStream;await v.play().catch(()=>{});
   if('BarcodeDetector' in window){try{_scanDet=new window.BarcodeDetector({formats:['qr_code']});}catch(e){_scanDet=null;}}
-  _scanCanvas=document.createElement('canvas');
-  scanLoop();}
+  _scanCanvas=document.createElement('canvas');scanSetStatus('Point the camera at a student’s QR code…');scanLoop();
+  try{panel.scrollIntoView({behavior:'smooth',block:'nearest'});}catch(e){}}
 function scanSetStatus(txt,cls){const el=document.getElementById('scanStatus');if(el){el.innerHTML=txt;el.className='scanstatus'+(cls?' '+cls:'');}}
 async function scanLoop(){const v=document.getElementById('scanvid');if(!v||!_scanStream){return;}
   if(!_scanPaused&&v.readyState>=2){let raw=null;
@@ -1957,7 +1964,8 @@ async function scanLoop(){const v=document.getElementById('scanvid');if(!v||!_sc
     }catch(e){}
     if(raw)scanHandle(raw);}
   _scanRAF=requestAnimationFrame(scanLoop);}
-function scanStop(){if(_scanRAF)cancelAnimationFrame(_scanRAF);_scanRAF=null;if(_scanStream){_scanStream.getTracks().forEach(t=>{try{t.stop();}catch(e){}});}_scanStream=null;_scanDet=null;const m=document.getElementById('scanmodal');if(m)m.style.display='none';if(route.tab==='calendar'&&route.mode==='mark')render();}
+function scanCleanup(){if(_scanRAF)cancelAnimationFrame(_scanRAF);_scanRAF=null;if(_scanStream){_scanStream.getTracks().forEach(t=>{try{t.stop();}catch(e){}});}_scanStream=null;_scanDet=null;_scanPaused=false;scanOn=false;}
+function scanStop(){scanCleanup();const panel=document.getElementById('scanPanel');if(panel)panel.style.display='none';const act=document.getElementById('scanAct');if(act)act.innerHTML='';const btn=document.getElementById('scanToggleBtn');if(btn){btn.innerHTML=ico('scan')+' Scan QR to mark present';btn.classList.remove('danger');}}
 function scanHandle(raw){const now=Date.now();let t=String(raw||'').trim();if(t.toUpperCase().startsWith('SPJ:'))t=t.slice(4).trim();
   if(t===_scanLast.c&&now-_scanLast.t<2500)return; _scanLast={c:t,t:now};
   const s=DB.students.find(x=>((x.cid||'').trim().toLowerCase()===t.toLowerCase())||x.id===t);
@@ -1977,6 +1985,7 @@ function scanReject(){const act=document.getElementById('scanAct');if(act)act.in
 function scanAddPresent(sid){const e=DB.events.find(x=>x.id===_scanEid);const s=DB.students.find(x=>x.id===sid);if(!e||!s){scanReject();return;}
   e.students=e.students||[];e.exclude=(e.exclude||[]).filter(x=>x!==sid);e.manualBy=e.manualBy||{};if(!e.students.includes(sid)){e.students.push(sid);e.manualBy[sid]=(SESSION&&SESSION.u)||'';}
   save();setMark(_scanEid,sid,'present');
+  const rl=document.getElementById('markRoster');if(rl){rl.innerHTML=markRosterHTML(e);markRefresh(e);}
   const act=document.getElementById('scanAct');if(act)act.innerHTML='';scanSetStatus('✓ Added &amp; marked present: <b>'+esc(s.fn+' '+s.ln)+'</b>','ok');_scanPaused=false;_scanLast={c:'',t:0};}
 
 /* ================= PDF / EXCEL ================= */
