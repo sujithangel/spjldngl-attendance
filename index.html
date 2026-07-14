@@ -1351,11 +1351,11 @@ function listBatches(v){listShell(v,'Search batches...',null,()=>{const arch=DB.
   const archBtn=arch?`<button class="btn ghost" style="margin-top:12px" onclick="showArchBat=!showArchBat;listRefresh()">${showArchBat?'Hide':'Show'} archived (${arch})</button>`:'';
   return ((ui.edit?selbar(ids,'batches','batch'):'')+rows+(ui.edit?'':unCard)+archBtn)||emptyMsg('cap','No batches found.');});}
 function isUnassigned(s){return !s.batch||!DB.batches.find(b=>b.id===s.batch);}
-function selbarStudents(ids){const all=ids.length&&ids.every(i=>ui.sel.has(i));return `<div class="selbar"><div class="chk ${all?'on':''}" onclick="toggleAll(${JSON.stringify(ids).replace(/"/g,'&quot;')})">${all?ico('check'):''}</div><div class="grow"><b>${ui.sel.size}</b> selected</div><button class="btn sm subtle" ${ui.sel.size?'':'disabled'} title="Assign to batch" onclick="bulkAssign()">${ico('cap')}</button><button class="btn sm subtle" ${ui.sel.size?'':'disabled'} title="QR codes (PDF)" onclick="bulkStudentQRs()">${ico('qr')}</button><button class="btn sm subtle" ${ui.sel.size?'':'disabled'} onclick="bulkArchiveStudents()">Archive</button><button class="btn sm danger" ${ui.sel.size?'':'disabled'} onclick="bulkDelete('students','student')">${ico('trash')}</button></div>`;}
+function selbarStudents(ids){const all=ids.length&&ids.every(i=>ui.sel.has(i));return `<div class="selbar"><div class="chk ${all?'on':''}" onclick="toggleAll(${JSON.stringify(ids).replace(/"/g,'&quot;')})">${all?ico('check'):''}</div><div class="grow"><b>${ui.sel.size}</b> selected</div><button class="btn sm subtle" ${ui.sel.size?'':'disabled'} title="Assign to batch" onclick="bulkAssign()">${ico('users')}</button><button class="btn sm subtle" ${ui.sel.size?'':'disabled'} onclick="bulkArchiveStudents()">Archive</button><button class="btn sm danger" ${ui.sel.size?'':'disabled'} onclick="bulkDelete('students','student')">${ico('trash')}</button></div>`;}
 function filterBatchOpts(selId,q,withUn){const sel=$(selId);if(!sel)return;const cur=sel.value;q=(q||'').toLowerCase();let list=DB.batches.filter(b=>!b.archived&&b.name.toLowerCase().includes(q)).map(b=>({v:b.id,n:b.name}));if(withUn&&('unassigned'.includes(q)||!q))list.unshift({v:'',n:'— Unassigned —'});sel.innerHTML=list.map(o=>`<option value="${o.v}" ${o.v===cur?'selected':''}>${esc(o.n)}</option>`).join('')||'<option value="">No match</option>';}
 function bulkAssign(){if(!ui.sel.size)return;const ids=[...ui.sel];sheet(`<h3>Assign ${ids.length} student${ids.length>1?'s':''} to batch</h3><label class="f">Batch</label><div class="searchbox">${ico('search')}<input class="search" id="baQ" placeholder="Search batch..." oninput="filterBatchOpts('baB',this.value,true)"></div><select class="t" id="baB"><option value="">— Unassigned —</option>${DB.batches.filter(b=>!b.archived).map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('')}</select><button class="btn primary" style="margin-top:16px" onclick="doBulkAssign(${JSON.stringify(ids).replace(/"/g,'&quot;')})">Assign</button><button class="btn ghost" style="margin-top:10px" onclick="closeSheet()">Cancel</button>`);}
 function doBulkAssign(ids){const b=$('baB').value;ids.forEach(id=>{const s=DB.students.find(x=>x.id===id);if(s)s.batch=b;});save();ui.sel=new Set();closeSheet();render();toast(ids.length+' student'+(ids.length>1?'s':'')+' assigned');}
-function listStudents(v){listShell(v,'Search students...',canEdit()?`<button class="btn ghost sm" style="margin:0 0 10px" onclick="qrExportMenu()">${ico('qr')} Download QR cards (PNG)</button>`:'',()=>{const arch=DB.students.filter(s=>s.archived).length;const base=DB.students.filter(s=>showArchStu||!s.archived);const items=sortP(base.filter(s=>matchQ(s.fn+' '+s.ln+' '+(s.cid||'')+' '+s.email)));const ids=items.filter(s=>!s.archived).map(s=>s.id);const un=DB.students.filter(s=>!s.archived&&isUnassigned(s)).length;
+function listStudents(v){listShell(v,'Search students...',canEdit()?`<button class="btn ghost sm" style="margin:0 0 10px" onclick="qrExportSmart()">${ico('qr')} Download QR cards (PNG)</button>`:'',()=>{const arch=DB.students.filter(s=>s.archived).length;const base=DB.students.filter(s=>showArchStu||!s.archived);const items=sortP(base.filter(s=>matchQ(s.fn+' '+s.ln+' '+(s.cid||'')+' '+s.email)));const ids=items.filter(s=>!s.archived).map(s=>s.id);const un=DB.students.filter(s=>!s.archived&&isUnassigned(s)).length;
   const rows=items.map(s=>{const u=isUnassigned(s);const ar=s.archived;const act=ar?`<button class="btn sm subtle" onclick="event.stopPropagation();restoreStudent('${s.id}')">Restore</button>`:(ui.edit?`<button class="btn sm subtle" onclick="event.stopPropagation();editStudent('${s.id}')">${ico('edit')}</button><button class="btn sm danger" onclick="event.stopPropagation();archiveStudent('${s.id}')">${ico('trash')}</button>`:`<button class="btn sm subtle" onclick="studentInfo('${s.id}')">${ico('chev')}</button>`);return `<div class="card ${u&&!ar?'unassigned':''} ${ar?'archrow':''}" style="padding:11px 14px"><div class="row">${ui.edit&&!ar?chkbox(s.id):''}<div class="avatar ${u&&!ar?'':avColor(s.fn)}" ${u&&!ar?'style="background:#f59e0b"':''}>${initials(s.fn,s.ln)}</div><div class="grow" onclick="${ar?`studentInfo('${s.id}')`:(ui.edit?`editStudent('${s.id}')`:`studentInfo('${s.id}')`)}"><div style="font-weight:700">${esc(s.fn)} ${esc(s.ln)}${ar?'<span class="badge-arch">ARCHIVED</span>':(u?'<span class="badge-un">UNASSIGNED</span>':'')}</div><div class="mini">${esc(s.cid||'—')} · ${u?'No batch':esc(batchName(s.batch))}</div><div class="mini">${esc(s.email)}</div></div>${act}</div></div>`;}).join('');
   const archBtn=arch?`<button class="btn ghost" style="margin-top:12px" onclick="showArchStu=!showArchStu;listRefresh()">${showArchStu?'Hide':'Show'} archived (${arch})</button>`:'';
   return ((un?`<div class="mini" style="margin:0 4px 10px;color:#c2410c">${un} unassigned student${un>1?'s':''} — highlighted in amber</div>`:'')+(ui.edit?selbarStudents(ids):'')+rows+archBtn)||emptyMsg('users','No students found.');});}
@@ -1876,9 +1876,14 @@ async function emailReport(subject,filename,blob,mime){
 }
 async function emailReportMulti(subject,files){
   files=(files||[]).filter(Boolean);if(!files.length){toast('Pick at least one attachment');return;}
-  const to=(DB.recipients||[]).slice();if(!to.length){toast('No recipients set — add them in More → Email');return;}
+  const to=(DB.recipients||[]).slice();
+  // 1) Share sheet — let the user choose which app to send with (default)
+  try{const fl=files.map(f=>new File([f.blob],f.filename,{type:f.mime}));if(navigator.canShare&&navigator.canShare({files:fl})){await navigator.share({files:fl,title:subject,text:to.length?('To: '+to.join(', ')):subject});snack('Opened share — choose your email app',null,3000);return;}}catch(e){if(e&&e.name==='AbortError')return;}
+  // 2) Installed app (Capacitor) share sheet
+  if(isNative()){for(const f of files){await saveFile(f.filename,f.blob,f.mime);}snack('File'+(files.length>1?'s':'')+' ready — pick your email app to attach & send',null,3500);return;}
+  // 3) SMTP relay (automated send) if configured and recipients set
   const s=DB.smtp||{};
-  if(s.relay){
+  if(s.relay&&to.length){
     snack('Sending email…',null,4000);
     try{
       const atts=[];for(const f of files){atts.push({filename:f.filename,mime:f.mime,base64:await blobToB64(f.blob)});}
@@ -1888,11 +1893,10 @@ async function emailReportMulti(subject,files){
     }catch(err){snack('✗ Send failed: '+(err&&err.message||'network error'),null,4500);}
     return;
   }
-  if(isNative()){for(const f of files){await saveFile(f.filename,f.blob,f.mime);}snack('File'+(files.length>1?'s':'')+' ready — pick your email app to attach & send',null,3500);return;}
-  try{const fl=files.map(f=>new File([f.blob],f.filename,{type:f.mime}));if(navigator.canShare&&navigator.canShare({files:fl})){await navigator.share({files:fl,title:subject,text:'To: '+to.join(', ')});snack('Opened share — choose your email app',null,3000);return;}}catch(e){}
+  // 4) Download the files and open the default mail app
   try{for(const f of files)pcDownload(f.blob,f.filename,f.mime);}catch(e){}
   location.href='mailto:'+encodeURIComponent(to.join(','))+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent('Attendance files attached: '+files.map(f=>f.filename).join(', '));
-  snack('No relay set — files downloaded & email draft opened',null,4000);
+  snack('Files downloaded — email draft opened',null,4000);
 }
 function emailAtt(kind,id){
   if(kind==='event'){const e=DB.events.find(x=>x.id===id);const base='Attendance_'+e.name.replace(/[^a-z0-9]+/gi,'_')+'_'+e.date;return {subject:'Attendance — '+e.name+' ('+toDMY(e.date)+')',base,pdf:()=>buildEventDoc(e).output('blob'),xls:()=>csvBlob([CSV_HEAD,...eventRows(e)])};}
@@ -1901,16 +1905,16 @@ function emailAtt(kind,id){
 function emailChooser(kind,id){
   const a=emailAtt(kind,id);
   if(kind==='month'&&(!a.evs||!a.evs.length)){toast('No events this month');return;}
-  if(!(DB.recipients||[]).length){toast('No recipients set — add them in More → Email');return;}
+  const rc=(DB.recipients||[]).length;
   window._emailSel={pdf:true,xls:true,kind,id};
   sheet(`<h3>Email report</h3>
-    <div class="muted" style="margin:-4px 0 14px;font-size:13px">${ico('users')} To ${(DB.recipients||[]).length} recipient${(DB.recipients||[]).length>1?'s':''}</div>
+    <div class="muted" style="margin:-4px 0 14px;font-size:13px">${rc?`${ico('users')} Default recipients: ${rc}`:'Tap Send, then choose which app to email from.'}</div>
     <div class="sectlabel" style="margin:0 0 8px">Attach</div>
     <div class="attrow">
       <button class="attcard on" id="attPdf" onclick="toggleAtt('pdf')"><span class="attck">${ico('check')}</span>${ico('doc')}<span>PDF</span></button>
       <button class="attcard on" id="attXls" onclick="toggleAtt('xls')"><span class="attck">${ico('check')}</span>${ico('sheetx')}<span>Excel</span></button>
     </div>
-    <button class="btn primary" style="margin-top:16px" onclick="sendEmailChoice()">${ico('share')} Send</button>
+    <button class="btn primary" style="margin-top:16px" onclick="sendEmailChoice()">${ico('share')} Send / choose app</button>
     <div class="mini" style="text-align:center;margin-top:10px">Both attached by default — tap a card to include or drop it.</div>`);
 }
 function toggleAtt(k){const s=window._emailSel;if(!s)return;s[k]=!s[k];const el=$(k==='pdf'?'attPdf':'attXls');if(el)el.classList.toggle('on',s[k]);}
@@ -1977,7 +1981,7 @@ function studentQRSheet(id){const s=DB.students.find(x=>x.id===id);if(!s)return;
    <div class="mini" style="text-align:center;margin-bottom:12px">Scan at an event to mark <b>${esc(s.cid||'—')}</b> present</div>
    <button class="btn primary" onclick="downloadStudentQR('${s.id}')">${ico('dl')} Download QR card (PNG)</button>
    <button class="btn ghost" style="margin-top:10px" onclick="closeSheet()">Close</button>`);}
-function bulkStudentQRs(){const ids=[...ui.sel];if(!ids.length){toast('Select students first');return;}qrZipCards(ids.map(id=>DB.students.find(s=>s.id===id)));}
+function qrExportSmart(){if(ui&&ui.edit&&ui.sel&&ui.sel.size){qrZipCards([...ui.sel].map(id=>DB.students.find(s=>s.id===id)));return;}qrExportMenu();}
 function qrExportMenu(){const batches=DB.batches.filter(b=>!b.archived);const nAll=DB.students.filter(s=>!s.archived).length;uiModal(`<h3>Download QR cards</h3><div class="muted" style="margin:2px 0 14px">One PNG per student — 5&nbsp;cm QR with a dotted cut line and details outside. Several students download as a ZIP; files are named <b>FirstName_CampusID</b>.</div><div class="pklist2"><div class="pkrow" onclick="qrExportRun('all')"><div class="grow">All students <div class="mini" style="font-weight:400">${nAll} student${nAll!==1?'s':''}</div></div>${ico('chev')}</div>${batches.map(b=>{const n=DB.students.filter(s=>s.batch===b.id&&!s.archived).length;return `<div class="pkrow" onclick="qrExportRun('batch','${b.id}')"><div class="grow">${esc(b.name)} <div class="mini" style="font-weight:400">${n} student${n!==1?'s':''}</div></div>${ico('chev')}</div>`;}).join('')}</div><div class="mini" style="margin:8px 2px 0;color:var(--muted)">For specific students, use <b>Edit</b>, tick them, then tap the QR button.</div><button class="btn ghost" style="margin-top:12px;width:100%" onclick="uiClose()">Cancel</button>`);}
 function qrExportRun(scope,id){uiClose();const list=scope==='batch'?DB.students.filter(s=>s.batch===id&&!s.archived):DB.students.filter(s=>!s.archived);qrZipCards(list);}
 
