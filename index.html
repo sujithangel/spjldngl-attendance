@@ -1869,7 +1869,7 @@ async function emailReport(subject,filename,blob,mime){
   // No relay → use device share sheet (works offline; user picks their mail app)
   if(isNative()){await saveFile(filename,blob,mime);snack('File ready — pick your email app to attach & send',null,3500);return;}
   try{const file=new File([blob],filename,{type:mime});if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:subject,text:'To: '+to.join(', ')});snack('Opened share — choose your email app',null,3000);return;}}catch(e){}
-  try{dl(filename,blob,mime);}catch(e){}
+  try{pcDownload(blob,filename,mime);}catch(e){}
   location.href='mailto:'+encodeURIComponent(to.join(','))+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent('Attendance file attached: '+filename);
   snack('No relay set — file downloaded & email draft opened',null,4000);
 }
@@ -1889,7 +1889,7 @@ async function emailReportMulti(subject,files){
   }
   if(isNative()){for(const f of files){await saveFile(f.filename,f.blob,f.mime);}snack('File'+(files.length>1?'s':'')+' ready — pick your email app to attach & send',null,3500);return;}
   try{const fl=files.map(f=>new File([f.blob],f.filename,{type:f.mime}));if(navigator.canShare&&navigator.canShare({files:fl})){await navigator.share({files:fl,title:subject,text:'To: '+to.join(', ')});snack('Opened share — choose your email app',null,3000);return;}}catch(e){}
-  try{for(const f of files)dl(f.filename,f.blob,f.mime);}catch(e){}
+  try{for(const f of files)pcDownload(f.blob,f.filename,f.mime);}catch(e){}
   location.href='mailto:'+encodeURIComponent(to.join(','))+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent('Attendance files attached: '+files.map(f=>f.filename).join(', '));
   snack('No relay set — files downloaded & email draft opened',null,4000);
 }
