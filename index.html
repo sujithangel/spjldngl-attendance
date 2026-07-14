@@ -284,6 +284,12 @@ body{margin:0;padding:0;overflow:hidden;overscroll-behavior:none;background:var(
 .archrow{opacity:.62}
 .badge-arch{font-size:8px;font-weight:800;background:#e5e8f1;color:#646c88;padding:2px 6px;border-radius:5px;margin-left:6px;vertical-align:middle}
 .rep-pending{opacity:.55}
+.card.rep-done{background:#eef9f1;border-color:#c7e6d3}
+.card.rep-done .title{color:#0f6e56}
+.card.rep-done .datebadge{border-color:#bfe3cf}
+.card.rep-done .datebadge .d{color:#0f6e56}
+.card.rep-done .datebadge .wd,.card.rep-done .datebadge .m{color:#3f8f6f}
+.card.rep-done .mini{color:#3f8f6f}
 .btn.rep-off{opacity:.5;cursor:not-allowed;background:#eef1f8;color:#8a90a6}
 .chip.lock{cursor:default;opacity:.9}
 .chip.mine{background:var(--present-bg);color:var(--present);border-color:var(--present)}
@@ -1206,7 +1212,7 @@ function reportsView(v){
     body=`<div class="card"><div class="dash-head"><span class="reddot"></span>Export ${mlabel}</div>
         <div class="attrow"><button class="rbtn pdf" onclick="exportMonthPDF()">${ico('doc')} PDF</button><button class="rbtn xls" onclick="exportMonthCSV()">${ico('sheetx')} Excel</button><button class="rbtn mail" aria-label="Email report" onclick="emailMonthReport()">${ico('mail')}</button></div></div>
       <div class="sectlabel">Events in ${mlabel}</div>
-      ${evs.length?evs.map(e=>{const c=scount(e);const r=c.total?Math.round((c.present+c.late)/c.total*100):0;const done=isCompleted(e);return `<div class="card ${done?'':'rep-pending'}"><div class="row tap" onclick="go('calendar',null,'${e.id}')"><div class="datebadge" style="width:44px"><div class="wd">${wday(e.date)}</div><div class="d" style="font-size:18px">${dayNum(e.date)}</div><div class="m">${monY(e.date)}</div></div><div class="grow"><div class="title" style="font-size:14.5px">${esc(e.name)} ${done?`<span class="rep-badge done">${ico('check')} Done</span>`:`<span class="rep-badge wait">Upcoming</span>`}</div><div class="mini">${done?`${c.present}P · ${c.absent}A · ${c.late}L · ${r}%`:'Report available after the event'}</div></div></div>
+      ${evs.length?evs.map(e=>{const c=scount(e);const r=c.total?Math.round((c.present+c.late)/c.total*100):0;const done=isCompleted(e);return `<div class="card ${done?'rep-done':'rep-pending'}"><div class="row tap" onclick="go('calendar',null,'${e.id}')"><div class="datebadge" style="width:44px"><div class="wd">${wday(e.date)}</div><div class="d" style="font-size:18px">${dayNum(e.date)}</div><div class="m">${monY(e.date)}</div></div><div class="grow"><div class="title" style="font-size:14.5px">${esc(e.name)} ${done?`<span class="rep-badge done">${ico('check')} Done</span>`:`<span class="rep-badge wait">Upcoming</span>`}</div><div class="mini">${done?`${c.present}P · ${c.absent}A · ${c.late}L · ${r}%`:'Report available after the event'}</div></div></div>
         ${done?`<div class="selrow" style="margin:12px 0 0;justify-content:flex-end;gap:8px"><button class="iconbtn pdf" aria-label="PDF" onclick="exportEventPDF('${e.id}')">${ico('doc')}</button><button class="iconbtn xls" aria-label="Excel" onclick="exportEventCSV('${e.id}')">${ico('sheetx')}</button><button class="iconbtn mail" aria-label="Email" onclick="emailEventReport('${e.id}')">${ico('mail')}</button></div>`:''}</div>`;}).join(''):'<div class="empty">'+ico('doc')+'<div>No events in this month.</div></div>'}`;
   } else if(repMode==='batch'){
     const rows=monthBatchRows(evs);
