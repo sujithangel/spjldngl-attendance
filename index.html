@@ -40,7 +40,7 @@ body{margin:0;padding:0;overflow:hidden;overscroll-behavior:none;background:var(
 #ptr.spin .r{animation:ptrsp .7s linear infinite}@keyframes ptrsp{to{transform:rotate(360deg)}}
 /* Home dashboard */
 @keyframes dpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(1.6)}}
-.dhero{background:#B01E27;color:#fff;padding:calc(14px + env(safe-area-inset-top)) 18px 30px;border-radius:0 0 24px 24px;position:sticky;top:0;z-index:20}
+.dhero{background:#B01E27;color:#fff;padding:calc(14px + env(safe-area-inset-top)) 18px 30px;border-radius:0 0 24px 24px}
 .dtop{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .dgreet{flex:1;min-width:0;line-height:1.15}
 .dgreet span{display:block;font-size:11px;color:rgba(255,255,255,.82);font-weight:600}
@@ -1142,6 +1142,7 @@ function dashboardView(v){
   const filled=Math.round(pp/10);
   const segbar=`<div class="dsegbar">${Array.from({length:10},(_,i)=>`<i class="${i<filled?'on':''}"></i>`).join('')}</div>`;
   v.innerHTML=`
+    <div class="dstick">
     <div class="dhero">
       <div class="dtop">${logoHTML(36)}<div class="dgreet"><span>${greeting()}</span><b>${esc(displayName())}</b></div><div class="dav">${initials(SESSION?SESSION.u:'',' ')}</div></div>
       <div class="dseg">${seg}</div>
