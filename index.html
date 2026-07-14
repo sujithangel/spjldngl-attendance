@@ -662,7 +662,7 @@ const TIMEOUT_MS=2*60*60*1000; // 2 hours
 function persistSess(){try{if(SESSION)sessionStorage.setItem('spj_sess',JSON.stringify(SESSION));}catch(e){}}
 function endSession(){SESSION=null;clearTimeout(sessionTimer);try{sessionStorage.removeItem('spj_sess');}catch(e){}}
 function restoreSession(){try{const s=JSON.parse(sessionStorage.getItem('spj_sess')||'null');if(s&&s.exp>Date.now()&&findUser(s.u)){SESSION=s;scheduleTimeout();}else{try{sessionStorage.removeItem('spj_sess');}catch(e){}}}catch(e){}}
-function startSession(rec){SESSION={u:rec.u,role:rec.role,exp:Date.now()+TIMEOUT_MS};persistSess();scheduleTimeout();}
+function startSession(rec){SESSION={u:rec.u,role:rec.role,exp:Date.now()+TIMEOUT_MS};persistSess();scheduleTimeout();try{navStack=[];_lastPage='';const _v=document.getElementById('view');if(_v)_v.scrollTop=0;}catch(e){}}
 function uRole(){return (SESSION&&SESSION.role)||'user';}
 function isSuper(){return uRole()==='super';}
 function isMarker(){return uRole()==='marker';}
@@ -774,7 +774,7 @@ let qUp='',qPast='',qArch='',showArchived=false,upOpen=true,pastOpen=true,archOp
 let calMin=true,mRange=null,navStack=[],agendaFilter='upcoming',weekAnchor=null,nameSort='az';
 let evUI={editUp:false,editPast:false,editArch:false,selUp:new Set(),selPast:new Set(),selArch:new Set()};
 function resetUI(){ui={edit:false,sel:new Set(),q:''};qUp='';qPast='';qArch='';showArchived=false;upOpen=true;pastOpen=true;archOpen=false;upSort='date';evSec='up';evUI={editUp:false,editPast:false,editArch:false,selUp:new Set(),selPast:new Set(),selArch:new Set()};}
-function go(tab,sub,id,mode){navStack.push({...route});route={tab,sub:sub||null,id:id||null,mode:mode||null};_lastPage='';if(mode==='mark'){markFilter='all';markQuery='';}if(tab==='calendar'&&!id){const t=new Date();cur={y:t.getFullYear(),m:t.getMonth()};selDay=null;mRange=null;calMin=true;agendaFilter='upcoming';weekAnchor=t.toISOString().slice(0,10);}resetUI();render();}
+function go(tab,sub,id,mode){navStack.push({...route});route={tab,sub:sub||null,id:id||null,mode:mode||null};if(mode==='mark'){markFilter='all';markQuery='';}if(tab==='calendar'&&!id){const t=new Date();cur={y:t.getFullYear(),m:t.getMonth()};selDay=null;mRange=null;calMin=true;agendaFilter='upcoming';weekAnchor=t.toISOString().slice(0,10);}resetUI();render();}
 function back(){if(navStack.length){route=navStack.pop();resetUI();render();}else go('dashboard');}
 /* Device/browser back button acts as the in-app back button */
 let _backBound=false;
@@ -853,10 +853,11 @@ function render(){
   else if(route.tab==='reports'){route.sub==='export'?exportView(v):reportsView(v);}
   else if(route.tab==='more')moreView(v);
   const _pk=route.tab+'|'+(route.sub||'')+'|'+(route.id||'')+'|'+(route.mode||'');
-  if(_pk!==_lastPage){_lastPage=_pk;v.scrollTop=0;if(route.tab==='dashboard')animatePage(v);}
+  if(_pk!==_lastPage){_lastPage=_pk;if(route.tab==='dashboard')animatePage(v);}
   window.scrollTo(0,0);
 }
-function renderNav(){const tabs=isMarker()?[['dashboard','grid','Home']]:[['dashboard','grid','Home'],['calendar','cal','Events'],['reports','doc','Reports'],['more','more','More']];$('nav').innerHTML=tabs.map(([t,i,l])=>`<button class="${route.tab===t?'active':''}" onclick="go('${t}')">${ico(i)}${l}</button>`).join('');}
+function renderNav(){const tabs=isMarker()?[['dashboard','grid','Home']]:[['dashboard','grid','Home'],['calendar','cal','Events'],['reports','doc','Reports'],['more','more','More']];$('nav').innerHTML=tabs.map(([t,i,l])=>`<button class="${route.tab===t?'active':''}" onclick="navTap('${t}')">${ico(i)}${l}</button>`).join('');}
+function navTap(t){if(route.tab===t&&!route.sub&&!route.id&&!route.mode)return;go(t);}
 function head(title,{back,right,left,logo}={}){return `<div class="topbar">${back?`<button class="hbtn" onclick="${back}">${ico('back')}</button>`:(logo?logoHTML(34):'<span class="hspace"></span>')}<h1 class="${left||logo?'left':''}">${esc(title)}</h1>${right||'<span class="hspace"></span>'}</div>`;}
 function renderHeader(){let h='';
   if(route.tab==='calendar'&&!route.id)h=head('Events',{logo:true,right:canEdit()?`<button class="hbtn g" onclick="addEventForCalendar()">${ico('plus')}</button>`:''});
