@@ -8,6 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#D0242F">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1354,7 +1355,7 @@ function selbarStudents(ids){const all=ids.length&&ids.every(i=>ui.sel.has(i));r
 function filterBatchOpts(selId,q,withUn){const sel=$(selId);if(!sel)return;const cur=sel.value;q=(q||'').toLowerCase();let list=DB.batches.filter(b=>!b.archived&&b.name.toLowerCase().includes(q)).map(b=>({v:b.id,n:b.name}));if(withUn&&('unassigned'.includes(q)||!q))list.unshift({v:'',n:'— Unassigned —'});sel.innerHTML=list.map(o=>`<option value="${o.v}" ${o.v===cur?'selected':''}>${esc(o.n)}</option>`).join('')||'<option value="">No match</option>';}
 function bulkAssign(){if(!ui.sel.size)return;const ids=[...ui.sel];sheet(`<h3>Assign ${ids.length} student${ids.length>1?'s':''} to batch</h3><label class="f">Batch</label><div class="searchbox">${ico('search')}<input class="search" id="baQ" placeholder="Search batch..." oninput="filterBatchOpts('baB',this.value,true)"></div><select class="t" id="baB"><option value="">— Unassigned —</option>${DB.batches.filter(b=>!b.archived).map(b=>`<option value="${b.id}">${esc(b.name)}</option>`).join('')}</select><button class="btn primary" style="margin-top:16px" onclick="doBulkAssign(${JSON.stringify(ids).replace(/"/g,'&quot;')})">Assign</button><button class="btn ghost" style="margin-top:10px" onclick="closeSheet()">Cancel</button>`);}
 function doBulkAssign(ids){const b=$('baB').value;ids.forEach(id=>{const s=DB.students.find(x=>x.id===id);if(s)s.batch=b;});save();ui.sel=new Set();closeSheet();render();toast(ids.length+' student'+(ids.length>1?'s':'')+' assigned');}
-function listStudents(v){listShell(v,'Search students...',canEdit()?`<button class="btn ghost sm" style="margin:0 0 10px" onclick="exportStudentQRs()">${ico('qr')} Print attendance QR codes</button>`:'',()=>{const arch=DB.students.filter(s=>s.archived).length;const base=DB.students.filter(s=>showArchStu||!s.archived);const items=sortP(base.filter(s=>matchQ(s.fn+' '+s.ln+' '+(s.cid||'')+' '+s.email)));const ids=items.filter(s=>!s.archived).map(s=>s.id);const un=DB.students.filter(s=>!s.archived&&isUnassigned(s)).length;
+function listStudents(v){listShell(v,'Search students...',canEdit()?`<button class="btn ghost sm" style="margin:0 0 10px" onclick="qrExportMenu()">${ico('qr')} Download QR cards (PNG)</button>`:'',()=>{const arch=DB.students.filter(s=>s.archived).length;const base=DB.students.filter(s=>showArchStu||!s.archived);const items=sortP(base.filter(s=>matchQ(s.fn+' '+s.ln+' '+(s.cid||'')+' '+s.email)));const ids=items.filter(s=>!s.archived).map(s=>s.id);const un=DB.students.filter(s=>!s.archived&&isUnassigned(s)).length;
   const rows=items.map(s=>{const u=isUnassigned(s);const ar=s.archived;const act=ar?`<button class="btn sm subtle" onclick="event.stopPropagation();restoreStudent('${s.id}')">Restore</button>`:(ui.edit?`<button class="btn sm subtle" onclick="event.stopPropagation();editStudent('${s.id}')">${ico('edit')}</button><button class="btn sm danger" onclick="event.stopPropagation();archiveStudent('${s.id}')">${ico('trash')}</button>`:`<button class="btn sm subtle" onclick="studentInfo('${s.id}')">${ico('chev')}</button>`);return `<div class="card ${u&&!ar?'unassigned':''} ${ar?'archrow':''}" style="padding:11px 14px"><div class="row">${ui.edit&&!ar?chkbox(s.id):''}<div class="avatar ${u&&!ar?'':avColor(s.fn)}" ${u&&!ar?'style="background:#f59e0b"':''}>${initials(s.fn,s.ln)}</div><div class="grow" onclick="${ar?`studentInfo('${s.id}')`:(ui.edit?`editStudent('${s.id}')`:`studentInfo('${s.id}')`)}"><div style="font-weight:700">${esc(s.fn)} ${esc(s.ln)}${ar?'<span class="badge-arch">ARCHIVED</span>':(u?'<span class="badge-un">UNASSIGNED</span>':'')}</div><div class="mini">${esc(s.cid||'—')} · ${u?'No batch':esc(batchName(s.batch))}</div><div class="mini">${esc(s.email)}</div></div>${act}</div></div>`;}).join('');
   const archBtn=arch?`<button class="btn ghost" style="margin-top:12px" onclick="showArchStu=!showArchStu;listRefresh()">${showArchStu?'Hide':'Show'} archived (${arch})</button>`:'';
   return ((un?`<div class="mini" style="margin:0 4px 10px;color:#c2410c">${un} unassigned student${un>1?'s':''} — highlighted in amber</div>`:'')+(ui.edit?selbarStudents(ids):'')+rows+archBtn)||emptyMsg('users','No students found.');});}
@@ -1938,30 +1939,47 @@ function icsSaveSync(){DB.meta=DB.meta||{};DB.meta.icsUrl=$('icsU').value.trim()
 function icsClear(){DB.meta=DB.meta||{};DB.meta.icsUrl='';save();closeSheet();toast('Outlook link removed');render();}
 function icsDetach(id){const e=DB.events.find(x=>x.id===id);if(e){e.source='local';e.extUid=null;save();toast('Detached from Outlook — now a local event');render();}}
 
-/* ================= QR CODES ================= */
+/* ================= QR CODES (PNG cards in ZIP) ================= */
 function qrReady(){return !!window.qrcode;}
+function zipReady(){return !!window.JSZip;}
 function studentQRText(s){return 'SPJ:'+((s.cid||s.id||'').trim());}
 function qrDataURL(text,cell){if(!qrReady())return '';try{const q=qrcode(0,'M');q.addData(text);q.make();return q.createDataURL(cell||5,2);}catch(e){return '';}}
-function qrModulesDataURL(s){return qrDataURL(studentQRText(s));}
+function qrFileName(s){return ((s.fn||'')+'_'+(s.cid||s.id||'')).replace(/[^A-Za-z0-9._-]+/g,'_').replace(/^_+|_+$/g,'')||'student';}
+/* Draw one card: 5cm QR + white quiet-zone + dotted cut border; name & campus ID OUTSIDE the border */
+function studentCardCanvas(s){
+  const q=qrcode(0,'M');q.addData(studentQRText(s));q.make();const n=q.getModuleCount();
+  const QR=600,pad=Math.round(QR*0.09),box=QR+pad*2,M=48,topH=54,gap=26,nameH=42,cidH=34,botH=40;
+  const W=box+M*2,H=M+topH+box+gap+nameH+cidH+botH;
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d');
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);ctx.textAlign='center';
+  ctx.fillStyle='#B01E27';ctx.font='600 26px Helvetica, Arial, sans-serif';ctx.fillText('SPJ LONDON · ATTENDANCE',W/2,M+30);
+  const bx=(W-box)/2,by=M+topH;
+  ctx.save();ctx.strokeStyle='#999';ctx.lineWidth=2;ctx.setLineDash([12,9]);ctx.strokeRect(bx+1,by+1,box-2,box-2);ctx.restore();
+  const qx=bx+pad,qy=by+pad,cell=QR/n;ctx.fillStyle='#000';
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++){if(q.isDark(r,c))ctx.fillRect(Math.floor(qx+c*cell),Math.floor(qy+r*cell),Math.ceil(cell),Math.ceil(cell));}
+  let ty=by+box+gap+30;ctx.fillStyle='#1a2036';ctx.font='500 34px Helvetica, Arial, sans-serif';ctx.fillText(((s.fn||'')+' '+(s.ln||'')).slice(0,34),W/2,ty);
+  ty+=34;ctx.fillStyle='#646c88';ctx.font='400 25px Helvetica, Arial, sans-serif';ctx.fillText(((s.cid||'—')+' · '+batchName(s.batch)).slice(0,44),W/2,ty);
+  return cv;
+}
+function canvasBlob(cv){return new Promise(res=>{if(cv.toBlob)cv.toBlob(b=>res(b),'image/png');else{const d=cv.toDataURL('image/png');const bin=atob(d.split(',')[1]);const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);res(new Blob([arr],{type:'image/png'}));}});}
+async function downloadStudentQR(id){const s=DB.students.find(x=>x.id===id);if(!s)return;if(!qrReady()){toast('Connect to the internet once to generate QR codes');return;}const blob=await canvasBlob(studentCardCanvas(s));fileSave(blob,qrFileName(s)+'.png','image/png');}
+async function qrZipCards(list){if(!qrReady()){toast('Connect to the internet once to generate QR codes');return;}list=sortP((list||[]).filter(Boolean));if(!list.length){toast('No students');return;}
+  if(list.length===1){const b=await canvasBlob(studentCardCanvas(list[0]));fileSave(b,qrFileName(list[0])+'.png','image/png');return;}
+  if(!zipReady()){toast('QR export needs internet once to load');return;}
+  snack('Building '+list.length+' QR cards…',null,5000);
+  const zip=new JSZip();const used={};
+  for(const s of list){let nm=qrFileName(s);if(used[nm]){used[nm]++;nm=nm+'_'+used[nm];}else used[nm]=1;const b=await canvasBlob(studentCardCanvas(s));zip.file(nm+'.png',b);}
+  const out=await zip.generateAsync({type:'blob'});fileSave(out,'Attendance_QR_cards_'+list.length+'.zip','application/zip');}
 function studentQRSheet(id){const s=DB.students.find(x=>x.id===id);if(!s)return;if(!qrReady()){toast('Connect to the internet once to generate QR codes');return;}
   const url=qrDataURL(studentQRText(s),7);
   sheet(`<div class="row" style="gap:10px;margin-bottom:6px;align-items:center"><div class="avatar ${avColor(s.fn)}">${initials(s.fn,s.ln)}</div><div class="grow"><h3 style="margin:0">${esc(s.fn)} ${esc(s.ln)}</h3><div class="mini">${esc(s.cid||'—')} · ${esc(batchName(s.batch))}</div></div></div>
-   <div style="text-align:center;margin:8px 0 6px"><img src="${url}" alt="QR" style="width:190px;height:190px;image-rendering:pixelated;border:1px solid var(--line);border-radius:12px;padding:8px;background:#fff"></div>
+   <div style="text-align:center;margin:8px 0 6px"><img src="${url}" alt="QR" style="width:180px;height:180px;image-rendering:pixelated;border:1.5px dashed #999;border-radius:8px;padding:8px;background:#fff"></div>
    <div class="mini" style="text-align:center;margin-bottom:12px">Scan at an event to mark <b>${esc(s.cid||'—')}</b> present</div>
-   ${canEdit()?`<button class="btn primary" onclick="exportOneStudentQR('${s.id}')">${ico('dl')} Download this QR</button>`:''}
+   <button class="btn primary" onclick="downloadStudentQR('${s.id}')">${ico('dl')} Download QR card (PNG)</button>
    <button class="btn ghost" style="margin-top:10px" onclick="closeSheet()">Close</button>`);}
-function exportOneStudentQR(id){const s=DB.students.find(x=>x.id===id);if(!s||!qrReady())return;if(!pdfReady())return;const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',format:[70,90]});doc.setFontSize(11);doc.setTextColor(30,34,51);doc.text((s.fn+' '+s.ln).slice(0,28),35,12,{align:'center'});doc.setFontSize(9);doc.setTextColor(120);doc.text((s.cid||'')+'  ·  '+batchName(s.batch),35,18,{align:'center'});const u=qrDataURL(studentQRText(s),8);doc.addImage(u,'PNG',12.5,24,45,45);doc.setFontSize(7);doc.setTextColor(150);doc.text('SPJ London — Attendance',35,80,{align:'center'});shareOrDownload(doc,'QR_'+(s.fn+'_'+s.ln).replace(/[^a-z0-9]+/gi,'_')+'.pdf','Student QR',s.fn+' '+s.ln);}
-function bulkStudentQRs(){const ids=[...ui.sel];if(!ids.length){toast('Select students first');return;}exportSelectedStudentQRs(ids);}
-function exportSelectedStudentQRs(ids){if(!qrReady()){toast('Connect to the internet once to generate QR codes');return;}if(!pdfReady())return;const list=sortP(ids.map(id=>DB.students.find(s=>s.id===id)).filter(Boolean));if(!list.length){toast('No students selected');return;}const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',format:'a4'});const W=210;
-  list.forEach((s,i)=>{if(i>0)doc.addPage();
-    doc.setFontSize(19);doc.setTextColor(208,36,47);doc.text('SPJ London — Attendance',W/2,42,{align:'center'});
-    doc.setFontSize(20);doc.setTextColor(30,34,51);doc.text((s.fn+' '+s.ln).slice(0,42),W/2,62,{align:'center'});
-    doc.setFontSize(13);doc.setTextColor(120);doc.text((s.cid||'')+'   ·   '+batchName(s.batch),W/2,73,{align:'center'});
-    const qs=112,u=qrDataURL(studentQRText(s),10);doc.addImage(u,'PNG',(W-qs)/2,88,qs,qs);
-    doc.setFontSize(12);doc.setTextColor(90);doc.text('Scan at an event to mark '+(s.cid||'')+' present',W/2,88+qs+14,{align:'center'});
-    doc.setFontSize(8);doc.setTextColor(150);doc.text('Confidential · SP Jain London use only',W/2,288,{align:'center'});});
-  shareOrDownload(doc,'Attendance_QR_'+list.length+'_students.pdf','Student QR codes',list.length+' selected');}
-function exportStudentQRs(){if(!qrReady()){toast('Connect to the internet once to generate QR codes');return;}if(!pdfReady())return;const list=sortP(DB.students.filter(s=>!s.archived));if(!list.length){toast('No students');return;}const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'mm',format:'a4'});const cols=3,rows=4,mL=12,mT=16,cw=(210-2*mL)/cols,ch=(297-mT-12)/rows;doc.setFontSize(14);doc.setTextColor(208,36,47);doc.text('SPJ London — Attendance QR codes',105,10,{align:'center'});let i=0;list.forEach(s=>{const pos=i%(cols*rows);if(i>0&&pos===0){doc.addPage();doc.setFontSize(14);doc.setTextColor(208,36,47);doc.text('SPJ London — Attendance QR codes',105,10,{align:'center'});}const c=pos%cols,r=Math.floor(pos/cols);const x=mL+c*cw,y=mT+r*ch;const qs=Math.min(cw,ch)-20;const u=qrDataURL(studentQRText(s),6);doc.addImage(u,'PNG',x+(cw-qs)/2,y+2,qs,qs);doc.setFontSize(9);doc.setTextColor(30,34,51);doc.text((s.fn+' '+s.ln).slice(0,26),x+cw/2,y+qs+8,{align:'center'});doc.setFontSize(8);doc.setTextColor(120);doc.text((s.cid||''),x+cw/2,y+qs+13,{align:'center'});i++;});shareOrDownload(doc,'Attendance_QR_codes.pdf','QR codes','All students');}
+function bulkStudentQRs(){const ids=[...ui.sel];if(!ids.length){toast('Select students first');return;}qrZipCards(ids.map(id=>DB.students.find(s=>s.id===id)));}
+function qrExportMenu(){const batches=DB.batches.filter(b=>!b.archived);const nAll=DB.students.filter(s=>!s.archived).length;uiModal(`<h3>Download QR cards</h3><div class="muted" style="margin:2px 0 14px">One PNG per student — 5&nbsp;cm QR with a dotted cut line and details outside. Several students download as a ZIP; files are named <b>FirstName_CampusID</b>.</div><div class="pklist2"><div class="pkrow" onclick="qrExportRun('all')"><div class="grow">All students <div class="mini" style="font-weight:400">${nAll} student${nAll!==1?'s':''}</div></div>${ico('chev')}</div>${batches.map(b=>{const n=DB.students.filter(s=>s.batch===b.id&&!s.archived).length;return `<div class="pkrow" onclick="qrExportRun('batch','${b.id}')"><div class="grow">${esc(b.name)} <div class="mini" style="font-weight:400">${n} student${n!==1?'s':''}</div></div>${ico('chev')}</div>`;}).join('')}</div><div class="mini" style="margin:8px 2px 0;color:var(--muted)">For specific students, use <b>Edit</b>, tick them, then tap the QR button.</div><button class="btn ghost" style="margin-top:12px;width:100%" onclick="uiClose()">Cancel</button>`);}
+function qrExportRun(scope,id){uiClose();const list=scope==='batch'?DB.students.filter(s=>s.batch===id&&!s.archived):DB.students.filter(s=>!s.archived);qrZipCards(list);}
 
 /* ================= QR SCANNER (inline, live) ================= */
 let _scanEid=null,_scanStream=null,_scanRAF=null,_scanDet=null,_scanPaused=false,_scanLast={c:'',t:0},_scanCanvas=null,scanOn=false;
