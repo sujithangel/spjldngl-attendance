@@ -774,7 +774,7 @@ let qUp='',qPast='',qArch='',showArchived=false,upOpen=true,pastOpen=true,archOp
 let calMin=true,mRange=null,navStack=[],agendaFilter='upcoming',weekAnchor=null,nameSort='az';
 let evUI={editUp:false,editPast:false,editArch:false,selUp:new Set(),selPast:new Set(),selArch:new Set()};
 function resetUI(){ui={edit:false,sel:new Set(),q:''};qUp='';qPast='';qArch='';showArchived=false;upOpen=true;pastOpen=true;archOpen=false;upSort='date';evSec='up';evUI={editUp:false,editPast:false,editArch:false,selUp:new Set(),selPast:new Set(),selArch:new Set()};}
-function go(tab,sub,id,mode){navStack.push({...route});route={tab,sub:sub||null,id:id||null,mode:mode||null};if(mode==='mark'){markFilter='all';markQuery='';}if(tab==='calendar'&&!id){const t=new Date();cur={y:t.getFullYear(),m:t.getMonth()};selDay=null;mRange=null;calMin=true;agendaFilter='upcoming';weekAnchor=t.toISOString().slice(0,10);}resetUI();render();}
+function go(tab,sub,id,mode){navStack.push({...route});route={tab,sub:sub||null,id:id||null,mode:mode||null};_lastPage='';if(mode==='mark'){markFilter='all';markQuery='';}if(tab==='calendar'&&!id){const t=new Date();cur={y:t.getFullYear(),m:t.getMonth()};selDay=null;mRange=null;calMin=true;agendaFilter='upcoming';weekAnchor=t.toISOString().slice(0,10);}resetUI();render();}
 function back(){if(navStack.length){route=navStack.pop();resetUI();render();}else go('dashboard');}
 /* Device/browser back button acts as the in-app back button */
 let _backBound=false;
@@ -853,7 +853,7 @@ function render(){
   else if(route.tab==='reports'){route.sub==='export'?exportView(v):reportsView(v);}
   else if(route.tab==='more')moreView(v);
   const _pk=route.tab+'|'+(route.sub||'')+'|'+(route.id||'')+'|'+(route.mode||'');
-  if(_pk!==_lastPage){_lastPage=_pk;if(route.tab==='dashboard')animatePage(v);}
+  if(_pk!==_lastPage){_lastPage=_pk;v.scrollTop=0;if(route.tab==='dashboard')animatePage(v);}
   window.scrollTo(0,0);
 }
 function renderNav(){const tabs=isMarker()?[['dashboard','grid','Home']]:[['dashboard','grid','Home'],['calendar','cal','Events'],['reports','doc','Reports'],['more','more','More']];$('nav').innerHTML=tabs.map(([t,i,l])=>`<button class="${route.tab===t?'active':''}" onclick="go('${t}')">${ico(i)}${l}</button>`).join('');}
