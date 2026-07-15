@@ -613,8 +613,11 @@ button.tpick .ic{color:var(--dim);flex:0 0 auto;width:18px;height:18px}
 .scanpanel .scantool.on{background:#F5C443;color:#4a3a00}
 .scanpanel .scanstatus{position:absolute;left:8px;right:8px;bottom:8px;top:auto;text-align:center;color:#fff;font-size:13px;font-weight:600;background:#000b;padding:9px 10px;border-radius:10px;z-index:3}
 .scanpanel .scanstatus.ok{background:#1a9d5bf2}.scanpanel .scanstatus.warn{background:#d97706f5}.scanpanel .scanstatus.err{background:#D0242Ff2}.scanpanel .scanstatus.junk{background:#4b5563f2}
-.scanpanel .scanact{position:absolute;left:10px;right:10px;bottom:48px;top:auto;display:flex;flex-direction:column;gap:6px;z-index:3}
-.scanpanel .scanact .btn{margin:0}
+.scanpanel .scanact{position:absolute;left:10px;right:10px;bottom:64px;top:auto;display:flex;flex-direction:column;gap:7px;z-index:3}
+.scanpanel .scanact .btn{margin:0;padding:12px 14px;font-size:14px;font-weight:800;border-radius:11px;box-shadow:0 2px 8px rgba(0,0,0,.28)}
+.scanpanel .scanact .btn.sgo{background:#fff;color:#0f7a44;border:none}
+.scanpanel .scanact .btn.sgo .ic{color:#0f7a44}
+.scanpanel .scanact .btn.sno{background:rgba(15,18,28,.62);color:#fff;border:1.5px solid rgba(255,255,255,.6)}
 .mrow.justpop{animation:rpop 1.2s ease-out}
 @keyframes rpop{0%{background:#d6f4e4}100%{background:transparent}}
 @keyframes up{from{transform:translateY(100%)}}
@@ -711,6 +714,7 @@ const P={
  scan:'<path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M4 12h16"/>',
  qr:'<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h3v3M20 14v6M14 20h3"/>',
  flash:'<path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/>',
+ bulb:'<path d="M9 18h6M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.6c.6.5 1 1.2 1 2.4h6c0-1.2.4-1.9 1-2.4A7 7 0 0 0 12 2z"/>',
  logout:'<path d="M15 12H3M8 7l-5 5 5 5"/><path d="M13 4h6a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-6"/>',
  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
  chat:'<path d="M21 12a8 8 0 0 1-11.5 7.2L3 21l1.8-6.5A8 8 0 1 1 21 12z"/>',
@@ -1160,7 +1164,7 @@ function markView(v){const e=DB.events.find(x=>x.id===route.id);const _t=dstr();
   const _ms=eventStatus(e);
   v.innerHTML=`<div class="wrap"><div class="card" style="padding:12px 14px;margin-bottom:10px"><div class="row" style="align-items:flex-start;gap:8px"><div class="grow"><div class="title" style="font-size:15.5px">${esc(e.name)}</div><div class="mini" style="margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;align-items:center"><span>${ico('cal')} ${fmtDate(e.date)}</span><span>${ico('clock')} ${fmtTime(e.start)}–${fmtTime(e.end)}</span>${e.batches.length?`<span>${ico('cap')} ${esc(e.batches.map(batchName).join(', '))}</span>`:''}</div></div><span class="pill ${_ms.c}${_ms.t==='In progress'?' live':''}" style="padding:2px 9px;font-size:9px">${_ms.t.toUpperCase()}</span></div></div>
     <button class="btn primary" id="scanToggleBtn" style="margin:0 0 8px" onclick="scanEvent('${e.id}')">${ico('scan')} Scan QR to mark present</button>
-    <div id="scanPanel" class="scanpanel" style="display:none"><video id="scanvid" playsinline autoplay muted></video><div class="scanmask"></div><div class="scanfx"><b></b><b></b><b></b><b></b><div class="laser"></div></div><div class="scanflash" id="scanFlash"></div><div class="scantop"><button class="scanmode" id="scanModeBtn" onclick="scanToggleMode()">${ico('flash')} Express</button><span class="scancount" id="scanCount">0 / 0</span><button class="scantool" id="scanTorchBtn" title="Torch" onclick="scanTorch()">${ico('flash')}</button><button class="scantool" title="Stop scanning" onclick="scanStop()">${ico('x')}</button></div><div class="scanstatus" id="scanStatus">Point the camera at a student’s QR code…</div><div class="scanact" id="scanAct"></div></div>
+    <div id="scanPanel" class="scanpanel" style="display:none"><video id="scanvid" playsinline autoplay muted></video><div class="scanmask"></div><div class="scanfx"><b></b><b></b><b></b><b></b><div class="laser"></div></div><div class="scanflash" id="scanFlash"></div><div class="scantop"><button class="scanmode" id="scanModeBtn" onclick="scanToggleMode()">${ico('flash')} Express</button><span class="scancount" id="scanCount">0 / 0</span><button class="scantool" id="scanTorchBtn" title="Torch" onclick="scanTorch()">${ico('bulb')}</button><button class="scantool" title="Stop scanning" onclick="scanStop()">${ico('x')}</button></div><div class="scanstatus" id="scanStatus">Point the camera at a student’s QR code…</div><div class="scanact" id="scanAct"></div></div>
     <div class="row" style="gap:8px;margin-bottom:2px"><div class="searchbox" style="flex:1;margin:0">${ico('search')}<input class="search" value="${esc(markQuery)}" placeholder="Search name or campus ID..." oninput="markQuery=this.value;markRefresh(DB.events.find(x=>x.id==='${e.id}'))"></div><button class="editbtn" title="Sort ${nameSort==='az'?'A→Z':'Z→A'}" onclick="toggleSort()">${ico('sort')}</button><button class="editbtn" title="Manage students" onclick="assignEvent('${e.id}')">${ico('users')}</button></div>
     <div class="ftabs"><button class="ftab on" id="fAll" onclick="setFilter('all')"><span class="c" id="cAll">0</span>All</button><button class="ftab" id="fpresent" onclick="setFilter('present')"><span class="c" id="cPres">0</span>Present</button><button class="ftab" id="fabsent" onclick="setFilter('absent')"><span class="c" id="cAbs">0</span>Absent</button><button class="ftab" id="flate" onclick="setFilter('late')"><span class="c" id="cLate">0</span>Late</button></div>
     <div class="mini" style="text-align:center;margin:2px 0 10px">Tap a row: Present → Late → Absent · <b style="color:var(--a1)">auto-saved</b> · or Scan QR above</div>
@@ -2124,11 +2128,11 @@ function scanHandle(raw){const now=Date.now();const rawS=String(raw||'').trim();
     if(e.records[s.id]==='present'){scanBeep('dup');scanFlash('warn');scanSetStatus('Already present: <b>'+nm+'</b>'+((e.markAt&&e.markAt[s.id])?' · marked '+e.markAt[s.id]:''),'warn');
       const rl=document.getElementById('markRoster');if(rl){const row=rl.querySelector('[data-pid="'+s.id+'"]');if(row){try{row.scrollIntoView({behavior:'smooth',block:'center'});}catch(_){}row.classList.add('justpop');setTimeout(()=>row.classList.remove('justpop'),1200);}}scanIdleSoon(1600);return;}
     if(scanExpress()){doScanMark(e,s);}
-    else{_scanPaused=true;scanBeep('ok');scanFlash('ok');scanSetStatus('Mark present: <b>'+nm+'</b>?','ok');scanAct(`<button class="btn primary" onclick="scanConfirm('${s.id}')">${ico('check')} Mark present</button><button class="btn ghost" style="color:#fff;border-color:#ffffff55" onclick="scanReject()">Skip</button>`);}
+    else{_scanPaused=true;scanBeep('ok');scanFlash('ok');scanSetStatus('Mark present: <b>'+nm+'</b>?','ok');scanAct(`<button class="btn sgo" onclick="scanConfirm('${s.id}')">${ico('check')} Mark present</button><button class="btn sno" onclick="scanReject()">Skip</button>`);}
   } else {
     _scanPaused=true;scanBeep('bad');scanFlash('err');
     scanSetStatus('⚠ <b>'+nm+'</b> ('+cid+') is <b>NOT REGISTERED</b> for this event','err');
-    scanAct(`<button class="btn primary" onclick="scanAddPresent('${s.id}')">${ico('check')} Add &amp; mark present</button><button class="btn ghost" style="color:#fff;border-color:#ffffff55" onclick="scanReject()">Dismiss</button>`);
+    scanAct(`<button class="btn sgo" onclick="scanAddPresent('${s.id}')">${ico('check')} Add &amp; mark present</button><button class="btn sno" onclick="scanReject()">Dismiss</button>`);
   }}
 function scanConfirm(sid){const e=DB.events.find(x=>x.id===_scanEid);const s=DB.students.find(x=>x.id===sid);if(e&&s)doScanMark(e,s);scanAct('');_scanPaused=false;_scanLast={c:'',t:0};}
 function scanReject(){scanAct('');scanSetStatus('Point the camera at a student’s QR code…');_scanPaused=false;_scanLast={c:'',t:0};}
