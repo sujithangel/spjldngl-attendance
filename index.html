@@ -597,6 +597,23 @@ button.tpick .ic{color:var(--dim);flex:0 0 auto;width:18px;height:18px}
 .sheet h3{margin:0 0 4px;font-size:19px;font-weight:800}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:9px 13px;border-radius:999px;background:var(--acc-soft);color:var(--a1);font-size:13px;font-weight:600;margin:0 6px 8px 0;cursor:pointer;border:1.5px solid transparent}
 .chip.on{background:var(--a1);color:#fff}
+.bcard{border:0.5px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;margin-bottom:10px}
+.bcard.on{border-color:#f3c9cc}
+.bhead{display:flex;align-items:center;gap:11px;padding:12px;cursor:pointer}
+.bhead .chev{color:var(--dim);transition:transform .2s;display:flex;flex-shrink:0}
+.bhead.op .chev{transform:rotate(90deg);color:var(--a1)}
+.bmeta{flex:1;min-width:0}
+.bname{font-size:14px;font-weight:700;color:var(--txt)}
+.bcard:not(.on) .bname{color:var(--dim)}
+.bsub{font-size:12px;color:var(--a1);margin-top:1px}
+.bcard:not(.on) .bsub{color:var(--dim)}
+.bchk{width:22px;height:22px;border-radius:7px;border:1.5px solid #cbd2e6;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.bchk.on{background:var(--a1);border-color:var(--a1);color:#fff}
+.bchk svg{width:15px;height:15px}
+.babody{border-top:0.5px solid var(--line);background:#fbfcfe;padding:11px 12px 4px}
+.barow{display:flex;gap:16px;margin-bottom:10px}
+.blink{font-size:12px;font-weight:700;color:var(--a1);cursor:pointer}
+.blink.alt{color:var(--muted)}
 label.f{display:block;font-size:12px;font-weight:700;color:var(--dim);margin:13px 0 5px;text-transform:uppercase;letter-spacing:.03em}
 input.t,select.t,textarea.t{width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;font-size:15px;font-family:inherit;background:#fff;color:var(--txt)}
 textarea.t{min-height:90px;resize:vertical}
@@ -1522,11 +1539,39 @@ function saveEvent(id){const name=$('en').value.trim(),date=$('ed').value,start=
   if(id){const e=DB.events.find(x=>x.id===id);Object.assign(e,{name,date,start,end});}else DB.events.push({id:uid(),name,date,start,end,batches:[],students:[],leaders:[],records:{},status:null});save();closeSheet();if(!id)go('more','events');else render();toast('Saved');}
 
 /* ---- Assign people ---- */
-let assignTabState='batch', assignQ='', _aqf=false;
-function assignEvent(id){const e0=DB.events.find(x=>x.id===id);if(!e0)return;if(!canEdit()&&!(isMarker()&&isToday(e0))){toast('Markers can add students to today’s events only');return;}const mk=isMarker();window._ae=id;assignTabState=mk?'stud':'batch';assignQ='';_aqf=false;sheet(`<h3>${mk?'Manage students':'Assign people'}</h3><div class="muted" id="aeName" style="margin-bottom:10px"></div>${mk?`<div class="mini" style="margin:0 2px 4px;color:var(--muted)"><b style="color:var(--present)">Green (YOU)</b> = you added them — tap to remove. <b>Grey (PRE)</b> = pre-assigned by batch/admin (locked).</div>`:`<div class="tabbar"><button id="tb1" onclick="assignTab('batch')">Batches</button><button id="tb2" onclick="assignTab('stud')">Students</button><button id="tb3" onclick="assignTab('lead')">Leaders</button></div><div class="searchbox">${ico('search')}<input class="search" id="aq" placeholder="Search..." oninput="assignQ=this.value;assignBody()"></div>`}<div id="assignBody" style="margin-top:12px"></div><button class="btn primary" style="margin-top:16px" onclick="closeSheet();render()">Done</button>`);$('aeName').textContent=e0.name||'';assignTab(mk?'stud':'batch');}
+let assignTabState='batch', assignQ='', _aqf=false, assignBatchOpen={};
+function assignBatchExpand(id){assignBatchOpen[id]=!assignBatchOpen[id];assignBody();}
+function assignBatchTick(id){const e=DB.events.find(x=>x.id===window._ae);if(!e)return;if(isMarker()){toast('Markers add students only');return;}const i=e.batches.indexOf(id);
+  if(i>=0){if(!canRemoveStudents()){toast('Only a Super or Local Admin can remove people');return;}e.batches.splice(i,1);toast('Batch removed');}
+  else{e.batches.push(id);e.exclude=(e.exclude||[]).filter(sid=>{const s=DB.students.find(x=>x.id===sid);return !s||s.batch!==id;});assignBatchOpen[id]=true;toast('Batch added — all students selected');}
+  save();assignBody();}
+function batchSelectAll(id,v){const e=DB.events.find(x=>x.id===window._ae);if(!e)return;e.exclude=e.exclude||[];const bs=DB.students.filter(s=>s.batch===id&&!s.archived).map(s=>s.id);
+  if(v){e.exclude=e.exclude.filter(sid=>!bs.includes(sid));}
+  else{if(!canRemoveStudents()){toast('Only an admin can remove people');return;}bs.forEach(sid=>{if(!e.exclude.includes(sid))e.exclude.push(sid);});}
+  save();assignBody();}
+function assignEvent(id){const e0=DB.events.find(x=>x.id===id);if(!e0)return;if(!canEdit()&&!(isMarker()&&isToday(e0))){toast('Markers can add students to today’s events only');return;}const mk=isMarker();window._ae=id;assignTabState=mk?'stud':'batch';assignQ='';_aqf=false;assignBatchOpen={};sheet(`<h3>${mk?'Manage students':'Assign people'}</h3><div class="muted" id="aeName" style="margin-bottom:10px"></div>${mk?`<div class="mini" style="margin:0 2px 4px;color:var(--muted)"><b style="color:var(--present)">Green (YOU)</b> = you added them — tap to remove. <b>Grey (PRE)</b> = pre-assigned by batch/admin (locked).</div>`:`<div class="tabbar"><button id="tb1" onclick="assignTab('batch')">Batches</button><button id="tb2" onclick="assignTab('stud')">Students</button><button id="tb3" onclick="assignTab('lead')">Leaders</button></div><div class="searchbox">${ico('search')}<input class="search" id="aq" placeholder="Search..." oninput="assignQ=this.value;assignBody()"></div>`}<div id="assignBody" style="margin-top:12px"></div><button class="btn primary" style="margin-top:16px" onclick="closeSheet();render()">Done</button>`);$('aeName').textContent=e0.name||'';assignTab(mk?'stud':'batch');}
 function assignTab(t){assignTabState=t;assignQ='';const el=$('aq');if(el)el.value='';['tb1','tb2','tb3'].forEach((x,i)=>{const tb=$(x);if(tb)tb.classList.toggle('on',['batch','stud','lead'][i]===t);});assignBody();}
 function assignBody(){const e=DB.events.find(x=>x.id===window._ae),b=$('assignBody'),q=assignQ.toLowerCase();
-  if(assignTabState==='batch'){const items=sortNm(DB.batches.filter(x=>!x.archived&&x.name.toLowerCase().includes(q)));b.innerHTML=selAllBtn(items.map(x=>x.id),'batches')+items.map(x=>`<span class="chip ${e.batches.includes(x.id)?'on':''}" onclick="toggleAssign('batches','${x.id}','${esc(x.name)}')">${esc(x.name)} · ${DB.students.filter(s=>s.batch===x.id&&!s.archived).length}</span>`).join('')+`<div class="mini" style="margin-top:8px">Assigning a batch includes <b>all its students</b> automatically.</div>`;}
+  if(assignTabState==='batch'){const items=sortNm(DB.batches.filter(x=>!x.archived&&x.name.toLowerCase().includes(q)));
+    if(!items.length){b.innerHTML='<div class="mini">No batches match.</div>';return;}
+    b.innerHTML=items.map(x=>{
+      const on=e.batches.includes(x.id);const isOpen=!!assignBatchOpen[x.id];
+      const bs=sortP(DB.students.filter(s=>s.batch===x.id&&!s.archived));
+      const exc=bs.filter(s=>(e.exclude||[]).includes(s.id));const sel=bs.length-exc.length;
+      const summ=on?(sel+' of '+bs.length+' selected'+(exc.length?' · '+exc.length+' excluded':'')):(bs.length+' student'+(bs.length===1?'':'s')+' · off');
+      const chk=`<span class="bchk ${on?'on':''}">${on?ico('check'):''}</span>`;
+      let body='';
+      if(isOpen){
+        if(!on)body=`<div class="babody"><div class="mini" style="margin:0 0 6px">Turn the batch on to include its students.</div></div>`;
+        else if(!bs.length)body=`<div class="babody"><div class="mini" style="margin:0 0 6px">No students in this batch yet.</div></div>`;
+        else{
+          const bar=`<div class="barow"><span class="blink" onclick="batchSelectAll('${x.id}',1)">Select all</span><span class="blink alt" onclick="batchSelectAll('${x.id}',0)">Clear all</span></div>`;
+          const chips=bs.map(s=>{const son=!(e.exclude||[]).includes(s.id);return `<span class="chip ${son?'on':''}" onclick="toggleAssign('students','${s.id}','${esc(s.fn+' '+s.ln)}')">${esc(s.fn)} ${esc(s.ln)}</span>`;}).join('');
+          body=`<div class="babody">${bar}${chips}</div>`;
+        }
+      }
+      return `<div class="bcard ${on?'on':''}"><div class="bhead ${isOpen?'op':''}" onclick="assignBatchExpand('${x.id}')"><span onclick="event.stopPropagation();assignBatchTick('${x.id}')">${chk}</span><div class="bmeta"><div class="bname">${esc(x.name)}</div><div class="bsub">${summ}</div></div>${ico('chev')}</div>${body}</div>`;
+    }).join('')+`<div class="mini" style="margin-top:2px">Turning a batch on selects <b>all its students</b>. Tap a name to exclude or re-add.</div>`;}
   else if(assignTabState==='stud'){const me=(SESSION&&SESSION.u)||'';const inSrch=s=>(s.fn+' '+s.ln+' '+(s.cid||'')).toLowerCase().includes(q);
     if(isMarker()){
       const roster=studentsForEvent(e);const rosterIds=new Set(roster.map(s=>s.id));
