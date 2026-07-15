@@ -2086,7 +2086,9 @@ function scanFlash(cls){const f=document.getElementById('scanFlash');if(!f)retur
 function scanAct(html){const a=document.getElementById('scanAct');if(a)a.innerHTML=html||'';}
 function scanIdleSoon(ms){clearTimeout(_scanClr);_scanClr=setTimeout(()=>{if(scanOn&&!_scanPaused)scanSetStatus('Point the camera at a student’s QR code…');},ms||1300);}
 function scanCountUpd(e){const c=countMarks(e);const el=document.getElementById('scanCount');if(el)el.textContent=c.present+' / '+c.total;}
-async function scanTorch(){if(!_scanStream)return;const track=_scanStream.getVideoTracks()[0];if(!track){toast('Torch not available');return;}try{const caps=track.getCapabilities&&track.getCapabilities();if(!caps||!('torch'in caps)){toast('Torch not supported on this device');return;}_scanTorchOn=!_scanTorchOn;await track.applyConstraints({advanced:[{torch:_scanTorchOn}]});const b=document.getElementById('scanTorchBtn');if(b)b.classList.toggle('on',_scanTorchOn);}catch(e){toast('Torch not available');}}
+function scanTorchOK(){try{const tr=_scanStream&&_scanStream.getVideoTracks&&_scanStream.getVideoTracks()[0];const caps=tr&&tr.getCapabilities&&tr.getCapabilities();return !!(caps&&'torch'in caps);}catch(e){return false;}}
+function scanTorchDetect(){const b=document.getElementById('scanTorchBtn');if(b)b.style.display=scanTorchOK()?'':'none';}
+async function scanTorch(){if(!_scanStream||!scanTorchOK())return;const track=_scanStream.getVideoTracks()[0];try{_scanTorchOn=!_scanTorchOn;await track.applyConstraints({advanced:[{torch:_scanTorchOn}]});const b=document.getElementById('scanTorchBtn');if(b)b.classList.toggle('on',_scanTorchOn);}catch(e){toast('Torch not available');}}
 function scanMoveFront(e,pid){_scanRecent=_scanRecent.filter(x=>x!==pid);_scanRecent.unshift(pid);const rl=document.getElementById('markRoster');if(!rl)return;rl.innerHTML=markRosterHTML(e);markRefresh(e);const row=rl.querySelector('[data-pid="'+pid+'"]');if(row){row.classList.add('justpop');try{row.scrollIntoView({behavior:'smooth',block:'center'});}catch(_){}}}
 function doScanMark(e,s){e.markAt=e.markAt||{};e.markAt[s.id]=tstr();setMark(_scanEid,s.id,'present');scanBeep('ok');scanFlash('ok');scanSetStatus('✓ Present: <b>'+esc(s.fn+' '+s.ln)+'</b> · '+e.markAt[s.id],'ok');scanMoveFront(e,s.id);scanCountUpd(e);scanIdleSoon(1500);}
 function scanSupported(){return !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);}
@@ -2101,6 +2103,7 @@ async function startInlineScan(eid){const e=DB.events.find(x=>x.id===eid);if(!e)
   try{_scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});}
   catch(err){scanSetStatus('Camera permission denied. Allow camera access and try again.','err');return;}
   const v=document.getElementById('scanvid');if(!v){return;}v.srcObject=_scanStream;await v.play().catch(()=>{});
+  scanTorchDetect();setTimeout(scanTorchDetect,800);
   if('BarcodeDetector' in window){try{_scanDet=new window.BarcodeDetector({formats:['qr_code']});}catch(e){_scanDet=null;}}
   _scanCanvas=document.createElement('canvas');scanSetStatus('Point the camera at a student’s QR code…');scanLoop();
   try{panel.scrollIntoView({behavior:'smooth',block:'nearest'});}catch(e){}}
