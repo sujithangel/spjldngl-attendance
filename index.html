@@ -588,11 +588,35 @@ button.tpick .ic{color:var(--dim);flex:0 0 auto;width:18px;height:18px}
 .scanx2{position:absolute;top:8px;right:8px;z-index:3;background:rgba(0,0,0,.5);border:none;color:#fff;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer}
 .scanx2 .ic{width:18px;height:18px}
 .scanpanel #scanvid{width:100%;height:100%;object-fit:cover;display:block}
-.scanpanel .scanline{position:absolute;top:50%;left:50%;width:62%;height:62%;transform:translate(-50%,-50%);border:2px solid #fff;border-radius:12px;box-shadow:0 0 0 100vmax rgba(0,0,0,.28)}
-.scanpanel .scanstatus{position:absolute;left:8px;right:8px;bottom:8px;top:auto;text-align:center;color:#fff;font-size:12.5px;background:#000b;padding:7px 9px;border-radius:9px;z-index:2}
-.scanpanel .scanstatus.ok{background:#1a9d5bee}.scanpanel .scanstatus.warn{background:#d97706f2}.scanpanel .scanstatus.err{background:#D0242Fee}
-.scanpanel .scanact{position:absolute;left:10px;right:10px;bottom:46px;top:auto;display:flex;flex-direction:column;gap:6px;z-index:2}
+.scanpanel .scanmask{position:absolute;top:48%;left:50%;width:60%;height:60%;transform:translate(-50%,-50%);border-radius:16px;box-shadow:0 0 0 100vmax rgba(0,0,0,.32);z-index:1;pointer-events:none}
+.scanpanel .scanfx{position:absolute;top:48%;left:50%;width:60%;height:60%;transform:translate(-50%,-50%);z-index:2;pointer-events:none;animation:retpulse 1.7s ease-in-out infinite}
+.scanpanel .scanfx b{position:absolute;width:24px;height:24px;border:3px solid #39e07e;border-radius:5px}
+.scanpanel .scanfx b:nth-child(1){top:-2px;left:-2px;border-right:none;border-bottom:none}
+.scanpanel .scanfx b:nth-child(2){top:-2px;right:-2px;border-left:none;border-bottom:none}
+.scanpanel .scanfx b:nth-child(3){bottom:-2px;left:-2px;border-right:none;border-top:none}
+.scanpanel .scanfx b:nth-child(4){bottom:-2px;right:-2px;border-left:none;border-top:none}
+.scanpanel .scanfx .laser{position:absolute;left:4%;right:4%;height:2px;top:2%;background:linear-gradient(90deg,transparent,#39e07e,transparent);box-shadow:0 0 12px 2px rgba(57,224,126,.6);animation:laser 2.1s ease-in-out infinite}
+@keyframes retpulse{0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes laser{0%{top:2%}50%{top:96%}100%{top:2%}}
+.scanpanel .scanflash{position:absolute;inset:0;z-index:2;opacity:0;pointer-events:none}
+.scanpanel .scanflash.ok{background:#1a9d5b;animation:flpop .5s ease-out}
+.scanpanel .scanflash.warn{background:#d97706;animation:flpop .5s ease-out}
+.scanpanel .scanflash.err{background:#D0242F;animation:flpop .6s ease-out}
+.scanpanel .scanflash.junk{background:#4b5563;animation:flpop .32s ease-out}
+@keyframes flpop{0%{opacity:.5}100%{opacity:0}}
+.scanpanel .scantop{position:absolute;top:8px;left:8px;right:8px;display:flex;align-items:center;gap:7px;z-index:4}
+.scanpanel .scanmode{background:rgba(0,0,0,.55);color:#fff;border:none;font-size:11px;font-weight:700;padding:6px 11px;border-radius:20px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.scanpanel .scanmode .ic{width:13px;height:13px}
+.scanpanel .scancount{margin-left:auto;background:rgba(0,0,0,.55);color:#fff;font-size:12px;font-weight:700;padding:5px 11px;border-radius:20px}
+.scanpanel .scantool{background:rgba(0,0,0,.5);border:none;color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto}
+.scanpanel .scantool .ic{width:17px;height:17px}
+.scanpanel .scantool.on{background:#F5C443;color:#4a3a00}
+.scanpanel .scanstatus{position:absolute;left:8px;right:8px;bottom:8px;top:auto;text-align:center;color:#fff;font-size:13px;font-weight:600;background:#000b;padding:9px 10px;border-radius:10px;z-index:3}
+.scanpanel .scanstatus.ok{background:#1a9d5bf2}.scanpanel .scanstatus.warn{background:#d97706f5}.scanpanel .scanstatus.err{background:#D0242Ff2}.scanpanel .scanstatus.junk{background:#4b5563f2}
+.scanpanel .scanact{position:absolute;left:10px;right:10px;bottom:48px;top:auto;display:flex;flex-direction:column;gap:6px;z-index:3}
 .scanpanel .scanact .btn{margin:0}
+.mrow.justpop{animation:rpop 1.2s ease-out}
+@keyframes rpop{0%{background:#d6f4e4}100%{background:transparent}}
 @keyframes up{from{transform:translateY(100%)}}
 .sheet h3{margin:0 0 4px;font-size:19px;font-weight:800}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:9px 13px;border-radius:999px;background:var(--acc-soft);color:var(--a1);font-size:13px;font-weight:600;margin:0 6px 8px 0;cursor:pointer;border:1.5px solid transparent}
@@ -686,6 +710,7 @@ const P={
  lock:'<rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
  scan:'<path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M4 12h16"/>',
  qr:'<rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h3v3M20 14v6M14 20h3"/>',
+ flash:'<path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/>',
  logout:'<path d="M15 12H3M8 7l-5 5 5 5"/><path d="M13 4h6a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-6"/>',
  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
  chat:'<path d="M21 12a8 8 0 0 1-11.5 7.2L3 21l1.8-6.5A8 8 0 1 1 21 12z"/>',
@@ -1124,12 +1149,18 @@ function openChooser(eid,pid){const e=DB.events.find(x=>x.id===eid);const p=[...
 function markRefresh(e){const c=countMarks(e);['cAll','cPres','cAbs','cLate'].forEach((id,i)=>{const el=$(id);if(el)el.textContent=[c.total,c.present,c.absent,c.late][i];});const un=$('unmarkedN');if(un)un.textContent=c.un;
   document.querySelectorAll('[data-pid]').forEach(row=>{const pid=row.dataset.pid,r=e.records[pid];row.className='mrow'+(r?' '+r:'');const b=row.querySelector('.statusbtn');b.className='statusbtn'+(r?' '+r:'');b.innerHTML=r==='present'?ICO.check:r==='absent'?ICO.x:r==='late'?ICO.clock:ICO.dash;const stx=row.querySelector('.stx');const col=r==='present'?'var(--present)':r==='absent'?'var(--absent)':r==='late'?'var(--late)':'var(--dim)';stx.textContent=r?' · '+r.toUpperCase():'';stx.style.color=col;row.style.display=(markFilter==='all'||markFilter===r)&&(!markQuery||row.dataset.name.includes(markQuery.toLowerCase()))?'':'none';});}
 function markPersonRow(e,p,isLead){const sub=isLead?'Leader':`${esc(p.cid||'—')} · ${esc(batchName(p.batch))}`;return `<div class="mrow" data-pid="${p.id}" data-name="${esc((p.fn+' '+p.ln+' '+(p.cid||'')).toLowerCase())}" onclick="tapMark('${e.id}','${p.id}')"><div class="avatar sm${isLead?' lead':' '+avColor(p.fn)}">${initials(p.fn,p.ln)}</div><div class="grow"><div class="nm">${esc(p.fn)} ${esc(p.ln)}${isLead?' <span class="pill orange" style="padding:1px 7px;font-size:9px">LEADER</span>':''}</div><div class="m2">${sub}<span class="stx"></span></div></div><button class="statusbtn" onclick="event.stopPropagation();tapMark('${e.id}','${p.id}')">${ICO.dash}</button></div>`;}
-function markRosterHTML(e){const ld=sortP(leadersForEvent(e)),st=sortP(studentsForEvent(e));return (ld.length?'<div class="sectlabel" style="margin:6px 0 6px">Leaders</div>'+ld.map(p=>markPersonRow(e,p,true)).join(''):'')+(st.length?'<div class="sectlabel" style="margin:10px 0 6px">Students</div>'+st.map(p=>markPersonRow(e,p,false)).join(''):'<div class="empty">'+ico('users')+'<div>No students assigned.</div></div>');}
+function markRosterHTML(e){const ld=sortP(leadersForEvent(e)),stAll=sortP(studentsForEvent(e));const leadSet=new Set(ld.map(l=>l.id));
+  let recentHTML='',excl=new Set();
+  if(scanOn&&_scanRecent&&_scanRecent.length){const byId={};ld.concat(stAll).forEach(p=>byId[p.id]=p);const rec=_scanRecent.map(pid=>byId[pid]).filter(Boolean);
+    if(rec.length){excl=new Set(rec.map(p=>p.id));recentHTML='<div class="sectlabel" style="margin:6px 0 6px;color:var(--present)">Just scanned</div>'+rec.map(p=>markPersonRow(e,p,leadSet.has(p.id))).join('');}}
+  const ld2=ld.filter(p=>!excl.has(p.id)),st=stAll.filter(p=>!excl.has(p.id));
+  const body=(ld2.length?'<div class="sectlabel" style="margin:'+(recentHTML?10:6)+'px 0 6px">Leaders</div>'+ld2.map(p=>markPersonRow(e,p,true)).join(''):'')+(st.length?'<div class="sectlabel" style="margin:10px 0 6px">Students</div>'+st.map(p=>markPersonRow(e,p,false)).join(''):'');
+  return recentHTML+body||('<div class="empty">'+ico('users')+'<div>No students assigned.</div></div>');}
 function markView(v){const e=DB.events.find(x=>x.id===route.id);const _t=dstr();if(e.date>_t&&e.status!=='completed'){toast('Attendance opens on the event day');go('calendar',null,e.id);return;}if(isMarker()&&e.date!==_t){toast('You can only mark today’s events');go('calendar',null,e.id);return;}if(markNotStarted(e)){toast('Marking opens at '+fmtTime(e.start));go('calendar',null,e.id);return;}scanCleanup();
   const _ms=eventStatus(e);
   v.innerHTML=`<div class="wrap"><div class="card" style="padding:12px 14px;margin-bottom:10px"><div class="row" style="align-items:flex-start;gap:8px"><div class="grow"><div class="title" style="font-size:15.5px">${esc(e.name)}</div><div class="mini" style="margin-top:4px;display:flex;gap:12px;flex-wrap:wrap;align-items:center"><span>${ico('cal')} ${fmtDate(e.date)}</span><span>${ico('clock')} ${fmtTime(e.start)}–${fmtTime(e.end)}</span>${e.batches.length?`<span>${ico('cap')} ${esc(e.batches.map(batchName).join(', '))}</span>`:''}</div></div><span class="pill ${_ms.c}${_ms.t==='In progress'?' live':''}" style="padding:2px 9px;font-size:9px">${_ms.t.toUpperCase()}</span></div></div>
     <button class="btn primary" id="scanToggleBtn" style="margin:0 0 8px" onclick="scanEvent('${e.id}')">${ico('scan')} Scan QR to mark present</button>
-    <div id="scanPanel" class="scanpanel" style="display:none"><video id="scanvid" playsinline autoplay muted></video><div class="scanline"></div><button class="scanx2" title="Stop scanning" onclick="scanStop()">${ico('x')}</button><div class="scanstatus" id="scanStatus">Point the camera at a student’s QR code…</div><div class="scanact" id="scanAct"></div></div>
+    <div id="scanPanel" class="scanpanel" style="display:none"><video id="scanvid" playsinline autoplay muted></video><div class="scanmask"></div><div class="scanfx"><b></b><b></b><b></b><b></b><div class="laser"></div></div><div class="scanflash" id="scanFlash"></div><div class="scantop"><button class="scanmode" id="scanModeBtn" onclick="scanToggleMode()">${ico('flash')} Express</button><span class="scancount" id="scanCount">0 / 0</span><button class="scantool" id="scanTorchBtn" title="Torch" onclick="scanTorch()">${ico('flash')}</button><button class="scantool" title="Stop scanning" onclick="scanStop()">${ico('x')}</button></div><div class="scanstatus" id="scanStatus">Point the camera at a student’s QR code…</div><div class="scanact" id="scanAct"></div></div>
     <div class="row" style="gap:8px;margin-bottom:2px"><div class="searchbox" style="flex:1;margin:0">${ico('search')}<input class="search" value="${esc(markQuery)}" placeholder="Search name or campus ID..." oninput="markQuery=this.value;markRefresh(DB.events.find(x=>x.id==='${e.id}'))"></div><button class="editbtn" title="Sort ${nameSort==='az'?'A→Z':'Z→A'}" onclick="toggleSort()">${ico('sort')}</button><button class="editbtn" title="Manage students" onclick="assignEvent('${e.id}')">${ico('users')}</button></div>
     <div class="ftabs"><button class="ftab on" id="fAll" onclick="setFilter('all')"><span class="c" id="cAll">0</span>All</button><button class="ftab" id="fpresent" onclick="setFilter('present')"><span class="c" id="cPres">0</span>Present</button><button class="ftab" id="fabsent" onclick="setFilter('absent')"><span class="c" id="cAbs">0</span>Absent</button><button class="ftab" id="flate" onclick="setFilter('late')"><span class="c" id="cLate">0</span>Late</button></div>
     <div class="mini" style="text-align:center;margin:2px 0 10px">Tap a row: Present → Late → Absent · <b style="color:var(--a1)">auto-saved</b> · or Scan QR above</div>
@@ -2036,14 +2067,32 @@ function qrExportMenu(){const batches=DB.batches.filter(b=>!b.archived);const nA
 function qrExportRun(scope,id){uiClose();const list=scope==='batch'?DB.students.filter(s=>s.batch===id&&!s.archived):DB.students.filter(s=>!s.archived);qrZipCards(list);}
 
 /* ================= QR SCANNER (inline, live) ================= */
-let _scanEid=null,_scanStream=null,_scanRAF=null,_scanDet=null,_scanPaused=false,_scanLast={c:'',t:0},_scanCanvas=null,scanOn=false;
+let _scanEid=null,_scanStream=null,_scanRAF=null,_scanDet=null,_scanPaused=false,_scanLast={c:'',t:0},_scanCanvas=null,scanOn=false,_scanRecent=[],_scanAC=null,_scanTorchOn=false,_scanClr=null;
+function scanExpress(){return !(DB.meta&&DB.meta.scanExpress===false);}
+function scanToggleMode(){DB.meta=DB.meta||{};DB.meta.scanExpress=!scanExpress();save(false);const mb=document.getElementById('scanModeBtn');if(mb)mb.innerHTML=(scanExpress()?ico('flash')+' Express':ico('check')+' Confirm');toast(scanExpress()?'Express — auto-mark on scan':'Confirm each scan');}
+function scanBeep(type){try{_scanAC=_scanAC||new (window.AudioContext||window.webkitAudioContext)();const ac=_scanAC,t=ac.currentTime;const tone=(f,st,du,wave,vol)=>{const o=ac.createOscillator(),g=ac.createGain();o.type=wave||'sine';o.frequency.value=f;o.connect(g);g.connect(ac.destination);g.gain.setValueAtTime(.0001,t+st);g.gain.exponentialRampToValueAtTime(vol||.22,t+st+.01);g.gain.exponentialRampToValueAtTime(.0001,t+st+du);o.start(t+st);o.stop(t+st+du+.03);};
+  if(type==='ok'){tone(680,0,.09);tone(1020,.09,.12);}
+  else if(type==='dup'){tone(360,0,.16,'square');}
+  else if(type==='junk'){tone(240,0,.07,'sine',.12);}
+  else if(type==='unknown'){tone(430,0,.13,'square');tone(320,.13,.15,'square');}
+  else{tone(150,0,.22,'sawtooth');tone(150,.26,.22,'sawtooth');}
+  }catch(e){}
+  try{navigator.vibrate&&navigator.vibrate(type==='ok'?40:type==='dup'?[20,40,20]:type==='junk'?15:type==='unknown'?[30,40,30]:[60,50,60,50,60]);}catch(e){}}
+function scanFlash(cls){const f=document.getElementById('scanFlash');if(!f)return;f.className='scanflash';void f.offsetWidth;f.className='scanflash '+cls;}
+function scanAct(html){const a=document.getElementById('scanAct');if(a)a.innerHTML=html||'';}
+function scanIdleSoon(ms){clearTimeout(_scanClr);_scanClr=setTimeout(()=>{if(scanOn&&!_scanPaused)scanSetStatus('Point the camera at a student’s QR code…');},ms||1300);}
+function scanCountUpd(e){const c=countMarks(e);const el=document.getElementById('scanCount');if(el)el.textContent=c.present+' / '+c.total;}
+async function scanTorch(){if(!_scanStream)return;const track=_scanStream.getVideoTracks()[0];if(!track){toast('Torch not available');return;}try{const caps=track.getCapabilities&&track.getCapabilities();if(!caps||!('torch'in caps)){toast('Torch not supported on this device');return;}_scanTorchOn=!_scanTorchOn;await track.applyConstraints({advanced:[{torch:_scanTorchOn}]});const b=document.getElementById('scanTorchBtn');if(b)b.classList.toggle('on',_scanTorchOn);}catch(e){toast('Torch not available');}}
+function scanMoveFront(e,pid){_scanRecent=_scanRecent.filter(x=>x!==pid);_scanRecent.unshift(pid);const rl=document.getElementById('markRoster');if(!rl)return;rl.innerHTML=markRosterHTML(e);markRefresh(e);const row=rl.querySelector('[data-pid="'+pid+'"]');if(row){row.classList.add('justpop');try{row.scrollIntoView({behavior:'smooth',block:'center'});}catch(_){}}}
+function doScanMark(e,s){e.markAt=e.markAt||{};e.markAt[s.id]=tstr();setMark(_scanEid,s.id,'present');scanBeep('ok');scanFlash('ok');scanSetStatus('✓ Present: <b>'+esc(s.fn+' '+s.ln)+'</b> · '+e.markAt[s.id],'ok');scanMoveFront(e,s.id);scanCountUpd(e);scanIdleSoon(1500);}
 function scanSupported(){return !!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);}
 function scanEvent(eid){if(scanOn){scanStop();return;}startInlineScan(eid);}
 async function startInlineScan(eid){const e=DB.events.find(x=>x.id===eid);if(!e)return;
   if(!scanSupported()){toast('Camera not available on this device/browser');return;}
   const panel=document.getElementById('scanPanel');if(!panel)return;
-  _scanEid=eid;_scanPaused=false;_scanLast={c:'',t:0};scanOn=true;
+  _scanEid=eid;_scanPaused=false;_scanLast={c:'',t:0};_scanRecent=[];_scanTorchOn=false;scanOn=true;
   panel.style.display='block';const btn=document.getElementById('scanToggleBtn');if(btn){btn.innerHTML=ico('x')+' Stop scanning';btn.classList.add('danger');}
+  const mb=document.getElementById('scanModeBtn');if(mb)mb.innerHTML=(scanExpress()?ico('flash')+' Express':ico('check')+' Confirm');scanCountUpd(e);
   scanSetStatus('Starting camera…');
   try{_scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});}
   catch(err){scanSetStatus('Camera permission denied. Allow camera access and try again.','err');return;}
@@ -2061,28 +2110,31 @@ async function scanLoop(){const v=document.getElementById('scanvid');if(!v||!_sc
     if(raw)scanHandle(raw);}
   _scanRAF=requestAnimationFrame(scanLoop);}
 function scanCleanup(){if(_scanRAF)cancelAnimationFrame(_scanRAF);_scanRAF=null;if(_scanStream){_scanStream.getTracks().forEach(t=>{try{t.stop();}catch(e){}});}_scanStream=null;_scanDet=null;_scanPaused=false;scanOn=false;}
-function scanStop(){scanCleanup();const panel=document.getElementById('scanPanel');if(panel)panel.style.display='none';const act=document.getElementById('scanAct');if(act)act.innerHTML='';const btn=document.getElementById('scanToggleBtn');if(btn){btn.innerHTML=ico('scan')+' Scan QR to mark present';btn.classList.remove('danger');}}
-function scanHandle(raw){const now=Date.now();let t=String(raw||'').trim();if(t.toUpperCase().startsWith('SPJ:'))t=t.slice(4).trim();
-  if(t===_scanLast.c&&now-_scanLast.t<2500)return; _scanLast={c:t,t:now};
-  const s=DB.students.find(x=>((x.cid||'').trim().toLowerCase()===t.toLowerCase())||x.id===t);
+function scanStop(){const eid=_scanEid;scanCleanup();_scanRecent=[];const panel=document.getElementById('scanPanel');if(panel)panel.style.display='none';scanAct('');const btn=document.getElementById('scanToggleBtn');if(btn){btn.innerHTML=ico('scan')+' Scan QR to mark present';btn.classList.remove('danger');}const e=DB.events.find(x=>x.id===eid);const rl=document.getElementById('markRoster');if(e&&rl){rl.innerHTML=markRosterHTML(e);markRefresh(e);}}
+function scanHandle(raw){const now=Date.now();const rawS=String(raw||'').trim();
+  if(rawS===_scanLast.c&&now-_scanLast.t<2500)return; _scanLast={c:rawS,t:now};
   const e=DB.events.find(x=>x.id===_scanEid);if(!e)return;
-  if(!s){scanSetStatus('Unrecognised code — not a student QR.','err');return;}
-  const roster=studentsForEvent(e);const inRoster=roster.some(x=>x.id===s.id);
+  const isSPJ=rawS.toUpperCase().startsWith('SPJ:');const t=isSPJ?rawS.slice(4).trim():rawS;
+  if(!isSPJ||!t){scanBeep('junk');scanFlash('junk');scanSetStatus('Not a student ticket — ignored','junk');scanIdleSoon(900);return;}
+  const s=DB.students.find(x=>((x.cid||'').trim().toLowerCase()===t.toLowerCase())||x.id===t);
+  if(!s){scanBeep('unknown');scanFlash('err');scanSetStatus('Unknown code — no matching student','err');scanIdleSoon(1400);return;}
+  const nm=esc(s.fn+' '+s.ln),cid=esc(s.cid||'');
+  const inRoster=studentsForEvent(e).some(x=>x.id===s.id);
   if(inRoster){
-    if(e.records[s.id]==='present'){scanSetStatus('Already present: <b>'+esc(s.fn+' '+s.ln)+'</b>','ok');return;}
-    setMark(_scanEid,s.id,'present');try{navigator.vibrate&&navigator.vibrate(60);}catch(e2){}
-    scanSetStatus('✓ Marked present: <b>'+esc(s.fn+' '+s.ln)+'</b> ('+esc(s.cid||'')+')','ok');
+    if(e.records[s.id]==='present'){scanBeep('dup');scanFlash('warn');scanSetStatus('Already present: <b>'+nm+'</b>'+((e.markAt&&e.markAt[s.id])?' · marked '+e.markAt[s.id]:''),'warn');
+      const rl=document.getElementById('markRoster');if(rl){const row=rl.querySelector('[data-pid="'+s.id+'"]');if(row){try{row.scrollIntoView({behavior:'smooth',block:'center'});}catch(_){}row.classList.add('justpop');setTimeout(()=>row.classList.remove('justpop'),1200);}}scanIdleSoon(1600);return;}
+    if(scanExpress()){doScanMark(e,s);}
+    else{_scanPaused=true;scanBeep('ok');scanFlash('ok');scanSetStatus('Mark present: <b>'+nm+'</b>?','ok');scanAct(`<button class="btn primary" onclick="scanConfirm('${s.id}')">${ico('check')} Mark present</button><button class="btn ghost" style="color:#fff;border-color:#ffffff55" onclick="scanReject()">Skip</button>`);}
   } else {
-    _scanPaused=true;
-    scanSetStatus('⚠ <b>'+esc(s.fn+' '+s.ln)+'</b> ('+esc(s.cid||'')+') is <b>not registered</b> for this event.','warn');
-    const act=document.getElementById('scanAct');if(act)act.innerHTML=`<button class="btn primary" onclick="scanAddPresent('${s.id}')">${ico('check')} Add &amp; mark present</button><button class="btn ghost" style="margin-top:8px;color:#fff;border-color:#ffffff55" onclick="scanReject()">Reject / skip</button>`;
+    _scanPaused=true;scanBeep('bad');scanFlash('err');
+    scanSetStatus('⚠ <b>'+nm+'</b> ('+cid+') is <b>NOT REGISTERED</b> for this event','err');
+    scanAct(`<button class="btn primary" onclick="scanAddPresent('${s.id}')">${ico('check')} Add &amp; mark present</button><button class="btn ghost" style="color:#fff;border-color:#ffffff55" onclick="scanReject()">Dismiss</button>`);
   }}
-function scanReject(){const act=document.getElementById('scanAct');if(act)act.innerHTML='';scanSetStatus('Skipped. Point at the next QR…');_scanPaused=false;_scanLast={c:'',t:0};}
+function scanConfirm(sid){const e=DB.events.find(x=>x.id===_scanEid);const s=DB.students.find(x=>x.id===sid);if(e&&s)doScanMark(e,s);scanAct('');_scanPaused=false;_scanLast={c:'',t:0};}
+function scanReject(){scanAct('');scanSetStatus('Point the camera at a student’s QR code…');_scanPaused=false;_scanLast={c:'',t:0};}
 function scanAddPresent(sid){const e=DB.events.find(x=>x.id===_scanEid);const s=DB.students.find(x=>x.id===sid);if(!e||!s){scanReject();return;}
   e.students=e.students||[];e.exclude=(e.exclude||[]).filter(x=>x!==sid);e.manualBy=e.manualBy||{};if(!e.students.includes(sid)){e.students.push(sid);e.manualBy[sid]=(SESSION&&SESSION.u)||'';}
-  save();setMark(_scanEid,sid,'present');
-  const rl=document.getElementById('markRoster');if(rl){rl.innerHTML=markRosterHTML(e);markRefresh(e);}
-  const act=document.getElementById('scanAct');if(act)act.innerHTML='';scanSetStatus('✓ Added &amp; marked present: <b>'+esc(s.fn+' '+s.ln)+'</b>','ok');_scanPaused=false;_scanLast={c:'',t:0};}
+  save();doScanMark(e,s);scanAct('');_scanPaused=false;_scanLast={c:'',t:0};}
 
 /* ================= PDF / EXCEL ================= */
 function pdfReady(){if(!window.jspdf||!window.jspdf.jsPDF){toast('PDF engine needs internet once to load');return false;}return true;}
